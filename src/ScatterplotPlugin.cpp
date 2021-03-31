@@ -51,7 +51,7 @@ ScatterplotPlugin::ScatterplotPlugin() :
         _settingsAction.getContextMenu()->exec(mapToGlobal(point));
     });
 
-    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(this, "No data loaded", "Drag items from the data hierarchy to this view to visualize data..."));
+    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(this, "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
     _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
         DropWidget::DropRegions dropRegions;
 
@@ -68,8 +68,10 @@ ScatterplotPlugin::ScatterplotPlugin() :
             dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", false);
 
         if (dataType == PointType) {
+            const auto description = QString("Visualize %1 as points or density/contour map").arg(candidateDatasetName);
+
             if (currentDatasetName.isEmpty()) {
-                dropRegions << new DropWidget::DropRegion(this, "Position", "Load point positions", true, [this, candidateDatasetName]() {
+                dropRegions << new DropWidget::DropRegion(this, "Position", description, true, [this, candidateDatasetName]() {
                     loadPointData(candidateDatasetName);
                 });
             }
@@ -81,17 +83,17 @@ ScatterplotPlugin::ScatterplotPlugin() :
                     const auto currentDataset = getCore()->requestData<Points>(currentDatasetName);
 
                     if (currentDataset.getNumPoints() != candidateDataset.getNumPoints()) {
-                        dropRegions << new DropWidget::DropRegion(this, "Position", "Load point positions", true, [this, candidateDatasetName]() {
+                        dropRegions << new DropWidget::DropRegion(this, "Position", description, true, [this, candidateDatasetName]() {
                             loadPointData(candidateDatasetName);
                         });
                     }
                     else {
-                        dropRegions << new DropWidget::DropRegion(this, "Position", "Load point positions", true, [this, candidateDatasetName]() {
+                        dropRegions << new DropWidget::DropRegion(this, "Position", description, true, [this, candidateDatasetName]() {
                             loadPointData(candidateDatasetName);
                         });
 
                         if (candidateDatasetName != _currentColorDataSet) {
-                            dropRegions << new DropWidget::DropRegion(this, "Color", "Load point colors", true, [this, candidateDatasetName]() {
+                            dropRegions << new DropWidget::DropRegion(this, "Color", QString("Color %1 by %2").arg(currentDatasetName, candidateDatasetName), true, [this, candidateDatasetName]() {
                                 loadColorData(candidateDatasetName);
                             });
                         }
