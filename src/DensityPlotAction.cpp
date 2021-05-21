@@ -12,17 +12,9 @@ DensityPlotAction::DensityPlotAction(ScatterplotPlugin* scatterplotPlugin) :
 {
     setToolTip("Density plot settings");
 
-    const auto updateRenderMode = [this]() -> void {
-        setVisible(getScatterplotWidget()->getRenderMode() != ScatterplotWidget::SCATTERPLOT);
-    };
-
     const auto updateSigma = [this]() -> void {
         getScatterplotWidget()->setSigma(0.01 * _sigmaAction.getValue());
     };
-
-    connect(getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, [this, updateRenderMode](const ScatterplotWidget::RenderMode& renderMode) {
-        updateRenderMode();
-    });
 
     connect(&_sigmaAction, &DecimalAction::valueChanged, this, [this, updateSigma](const double& value) {
         updateSigma();
@@ -38,7 +30,6 @@ DensityPlotAction::DensityPlotAction(ScatterplotPlugin* scatterplotPlugin) :
 
     updateSigmaAction();
 
-    updateRenderMode();
     updateSigma();
 }
 

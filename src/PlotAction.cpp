@@ -8,6 +8,16 @@ PlotAction::PlotAction(ScatterplotPlugin* scatterplotPlugin) :
     _pointPlotAction(scatterplotPlugin),
     _densityPlotAction(scatterplotPlugin)
 {
+    const auto updateRenderMode = [this]() -> void {
+        _pointPlotAction.setVisible(getScatterplotWidget()->getRenderMode() == ScatterplotWidget::SCATTERPLOT);
+        _densityPlotAction.setVisible(getScatterplotWidget()->getRenderMode() != ScatterplotWidget::SCATTERPLOT);
+    };
+
+    connect(getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, [this, updateRenderMode](const ScatterplotWidget::RenderMode& renderMode) {
+        updateRenderMode();
+    });
+
+    updateRenderMode();
 }
 
 QMenu* PlotAction::getContextMenu()

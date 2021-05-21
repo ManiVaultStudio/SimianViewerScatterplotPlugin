@@ -13,10 +13,6 @@ PointPlotAction::PointPlotAction(ScatterplotPlugin* scatterplotPlugin) :
     _pointSizeAction.setSuffix("px");
     _pointOpacityAction.setSuffix("%");
 
-    const auto updateRenderMode = [this]() -> void {
-        setVisible(getScatterplotWidget()->getRenderMode() == ScatterplotWidget::SCATTERPLOT);
-    };
-
     const auto updatePointSize = [this]() -> void {
         getScatterplotWidget()->setPointSize(_pointSizeAction.getValue());
     };
@@ -24,10 +20,6 @@ PointPlotAction::PointPlotAction(ScatterplotPlugin* scatterplotPlugin) :
     const auto updatePointOpacity = [this]() -> void {
         getScatterplotWidget()->setAlpha(0.01 * _pointOpacityAction.getValue());
     };
-
-    connect(getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, [this, updateRenderMode](const ScatterplotWidget::RenderMode& renderMode) {
-        updateRenderMode();
-    });
 
     connect(&_pointSizeAction, &DecimalAction::valueChanged, this, [this, updatePointSize](const double& value) {
         updatePointSize();
@@ -37,7 +29,6 @@ PointPlotAction::PointPlotAction(ScatterplotPlugin* scatterplotPlugin) :
         updatePointOpacity();
     });
 
-    updateRenderMode();
     updatePointSize();
     updatePointOpacity();
 }
