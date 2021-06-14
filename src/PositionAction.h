@@ -7,43 +7,19 @@
 
 class PositionAction : public PluginAction
 {
-public:
+protected: // Widget
+
     class Widget : public PluginAction::Widget {
     public:
-        Widget(QWidget* parent, PositionAction* positionAction);
-
-    private:
-        QHBoxLayout     _layout;
-        QLabel          _xDimensionLabel;
-        QLabel          _yDimensionLabel;
+        Widget(QWidget* parent, PositionAction* positionAction, const Widget::State& state);
     };
 
-    class PopupWidget : public PluginAction::PopupWidget {
-    public:
-        PopupWidget(QWidget* parent, PositionAction* positionAction);
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this, state);
     };
 
 public:
     PositionAction(ScatterplotPlugin* scatterplotPlugin);
-
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
 
     QMenu* getContextMenu();
 

@@ -6,6 +6,8 @@
 
 using namespace hdps::gui;
 
+#include <QHBoxLayout>
+
 ColorDimensionAction::ColorDimensionAction(ScatterplotPlugin* scatterplotPlugin) :
     PluginAction(scatterplotPlugin, "Coloring"),
     _colorDimensionAction(this, "Color dimension")
@@ -51,20 +53,13 @@ void ColorDimensionAction::setDimensions(const std::vector<QString>& dimensionNa
     setDimensions(static_cast<std::uint32_t>(dimensionNames.size()), dimensionNames);
 }
 
-ColorDimensionAction::Widget::Widget(QWidget* parent, ColorDimensionAction* colorDimensionAction) :
-    WidgetAction::Widget(parent, colorDimensionAction),
-    _layout()
+ColorDimensionAction::Widget::Widget(QWidget* parent, ColorDimensionAction* colorDimensionAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, colorDimensionAction, state)
 {
-    _layout.addWidget(new OptionAction::Widget(this, &colorDimensionAction->_colorDimensionAction, false));
+    auto layout = new QHBoxLayout();
 
-    setLayout(&_layout);
-}
+    layout->setMargin(0);
+    layout->addWidget(colorDimensionAction->_colorDimensionAction.createWidget(this));
 
-ColorDimensionAction::PopupWidget::PopupWidget(QWidget* parent, ColorDimensionAction* colorDimensionAction) :
-    WidgetAction::PopupWidget(parent, colorDimensionAction),
-    _layout()
-{
-    _layout.addWidget(new OptionAction::Widget(this, &colorDimensionAction->_colorDimensionAction));
-
-    setLayout(&_layout);
+    setLayout(layout);
 }

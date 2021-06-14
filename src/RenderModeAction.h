@@ -9,51 +9,26 @@ class QMenu;
 
 class RenderModeAction : public PluginAction
 {
-public:
+protected: // Widget
+
     class Widget : public PluginAction::Widget {
     public:
-        Widget(QWidget* parent, RenderModeAction* renderModeAction);
-
-    private:
-        QHBoxLayout         _layout;
+        Widget(QWidget* parent, RenderModeAction* renderModeAction, const Widget::State& state);
     };
 
-    class PopupWidget : public PluginAction::PopupWidget {
-    public:
-        PopupWidget(QWidget* parent, RenderModeAction* renderModeAction);
-
-    private:
-        QHBoxLayout         _layout;
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this, state);
     };
 
 public:
     RenderModeAction(ScatterplotPlugin* scatterplotPlugin);
 
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
-
     QMenu* getContextMenu();
 
 protected:
-    hdps::gui::StandardAction   _scatterPlotAction;
-    hdps::gui::StandardAction   _densityPlotAction;
-    hdps::gui::StandardAction   _contourPlotAction;
+    hdps::gui::ToggleAction     _scatterPlotAction;
+    hdps::gui::ToggleAction     _densityPlotAction;
+    hdps::gui::ToggleAction     _contourPlotAction;
     QActionGroup                _actionGroup;
 
     friend class Widget;

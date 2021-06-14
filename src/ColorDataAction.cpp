@@ -4,6 +4,8 @@
 #include "ScatterplotPlugin.h"
 
 #include <QMenu>
+#include <QHBoxLayout>
+#include <QLabel>
 
 using namespace hdps::gui;
 
@@ -25,20 +27,13 @@ QMenu* ColorDataAction::getContextMenu()
     return menu;
 }
 
-ColorDataAction::Widget::Widget(QWidget* parent, ColorDataAction* coloringAction) :
-    WidgetAction::Widget(parent, coloringAction),
-    _layout()
+ColorDataAction::Widget::Widget(QWidget* parent, ColorDataAction* colorDataAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, colorDataAction, state)
 {
-    _layout.addWidget(new StringAction::Widget(this, &coloringAction->_datasetNameAction, false));
+    auto layout = new QVBoxLayout();
 
-    setLayout(&_layout);
-}
+    layout->setMargin(0);
+    layout->addWidget(colorDataAction->_datasetNameAction.createWidget(this));
 
-ColorDataAction::PopupWidget::PopupWidget(QWidget* parent, ColorDataAction* coloringAction) :
-    WidgetAction::PopupWidget(parent, coloringAction),
-    _layout()
-{
-    _layout.addWidget(new StringAction::Widget(this, &coloringAction->_datasetNameAction));
-
-    setLayout(&_layout);
+    setLayout(layout);
 }

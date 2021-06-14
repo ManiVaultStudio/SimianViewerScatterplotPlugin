@@ -52,24 +52,25 @@ QMenu* DensityPlotAction::getContextMenu()
     return menu;
 }
 
-DensityPlotAction::Widget::Widget(QWidget* parent, DensityPlotAction* densityPlotAction) :
-    WidgetAction::Widget(parent, densityPlotAction),
-    _layout(),
-    _sigmaLabel("Sigma:")
+DensityPlotAction::Widget::Widget(QWidget* parent, DensityPlotAction* densityPlotAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, densityPlotAction, state)
 {
-    _layout.addWidget(&_sigmaLabel);
-    _layout.addWidget(new DecimalAction::Widget(this, &densityPlotAction->_sigmaAction, DecimalAction::Widget::Configuration::Slider));
+    switch (state)
+    {
+        case Widget::State::Standard:
+        case Widget::State::Popup:
+        {
+            auto layout = new QHBoxLayout();
 
-    setLayout(&_layout);
-}
+            layout->setMargin(0);
+            layout->addWidget(new QLabel("Sigma:"));
+            layout->addWidget(densityPlotAction->_sigmaAction.createWidget(this));
 
-DensityPlotAction::PopupWidget::PopupWidget(QWidget* parent, DensityPlotAction* densityPlotAction) :
-    WidgetAction::PopupWidget(parent, densityPlotAction)
-{
-    auto layout = new QGridLayout();
+            setLayout(layout);
+            break;
+        }
 
-    layout->addWidget(new QLabel("Sigma:"), 0, 0);
-    layout->addWidget(new DecimalAction::Widget(this, &densityPlotAction->_sigmaAction), 0, 1);
-
-    setLayout(layout);
+        default:
+            break;
+    }
 }

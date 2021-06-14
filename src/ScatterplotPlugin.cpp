@@ -38,9 +38,13 @@ ScatterplotPlugin::ScatterplotPlugin() :
     _numPoints(0),
     _pixelSelectionTool(new PixelSelectionTool(this, false)),
     _scatterPlotWidget(new ScatterplotWidget(*_pixelSelectionTool)),
-    _dropWidget(new DropWidget(_scatterPlotWidget)),
+    _dropWidget(nullptr),
     _settingsAction(this)
 {
+    _scatterPlotWidget->setMouseTracking(true);
+
+    _dropWidget = new DropWidget(_scatterPlotWidget);
+
     setDockingLocation(DockableWidget::DockingLocation::Right);
     setFocusPolicy(Qt::ClickFocus);
 

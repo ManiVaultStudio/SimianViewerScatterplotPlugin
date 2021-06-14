@@ -54,7 +54,7 @@ QMenu* SettingsAction::getContextMenu()
 }
 
 SettingsAction::Widget::Widget(QWidget* parent, SettingsAction* settingsAction) :
-    WidgetAction::Widget(parent, settingsAction),
+    WidgetAction::Widget(parent, settingsAction, Widget::State::Standard),
     _layout(),
     _toolBarWidget(),
     _toolBarLayout(),
@@ -133,10 +133,10 @@ void SettingsAction::Widget::addStateWidget(WidgetAction* widgetAction, const st
 
 void SettingsAction::Widget::updateLayout()
 {
-    QMap<StateWidget*, WidgetType> states;
+    QMap<StateWidget*, Widget::State> states;
 
     for (auto stateWidget : _stateWidgets)
-        states[stateWidget] = WidgetType::Compact;
+        states[stateWidget] = Widget::State::Collapsed;
 
     const auto getWidth = [this, &states]() -> std::uint32_t {
         std::uint32_t width = 2 * _layout.margin();
@@ -166,7 +166,7 @@ void SettingsAction::Widget::updateLayout()
     for (auto stateWidget : prioritySortedStateWidgets) {
         auto cachedStates = states;
 
-        states[stateWidget] = WidgetType::Standard;
+        states[stateWidget] = Widget::State::Standard;
 
         if (getWidth() > static_cast<std::uint32_t>(width())) {
             states = cachedStates;
@@ -204,9 +204,9 @@ SettingsAction::SpacerWidget::SpacerWidget(const Type& type /*= State::Divider*/
     setType(type);
 }
 
-SettingsAction::SpacerWidget::Type SettingsAction::SpacerWidget::getType(const WidgetAction::WidgetType& widgetTypeLeft, const WidgetAction::WidgetType& widgetTypeRight)
+SettingsAction::SpacerWidget::Type SettingsAction::SpacerWidget::getType(const WidgetAction::Widget::State& widgetTypeLeft, const WidgetAction::Widget::State& widgetTypeRight)
 {
-    return widgetTypeLeft == WidgetAction::WidgetType::Compact && widgetTypeRight == WidgetAction::WidgetType::Compact ? Type::Spacer : Type::Divider;
+    return widgetTypeLeft == WidgetAction::Widget::State::Collapsed && widgetTypeRight == WidgetAction::Widget::State::Collapsed ? Type::Spacer : Type::Divider;
 }
 
 SettingsAction::SpacerWidget::Type SettingsAction::SpacerWidget::getType(const WidgetAction::StateWidget* stateWidgetLeft, const WidgetAction::StateWidget* stateWidgetRight)

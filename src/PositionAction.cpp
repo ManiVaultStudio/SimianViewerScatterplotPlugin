@@ -76,34 +76,47 @@ std::int32_t PositionAction::getYDimension() const
     return _yDimensionAction.getCurrentIndex();
 }
 
-PositionAction::Widget::Widget(QWidget* parent, PositionAction* positionAction) :
-    WidgetAction::Widget(parent, positionAction),
-    _layout(),
-    _xDimensionLabel(QString("%1:").arg(positionAction->_xDimensionAction.text())),
-    _yDimensionLabel(QString("%1:").arg(positionAction->_yDimensionAction.text()))
+PositionAction::Widget::Widget(QWidget* parent, PositionAction* positionAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, positionAction, state)
 {
-    _xDimensionLabel.setToolTip(positionAction->_xDimensionAction.toolTip());
-    _yDimensionLabel.setToolTip(positionAction->_yDimensionAction.toolTip());
+    auto xDimensionLabel    = new QLabel("X-dimension:");
+    auto yDimensionLabel    = new QLabel("Y-dimension:");
+    auto xDimensionWidget   = positionAction->_xDimensionAction.createWidget(this);
+    auto yDimensionWidget   = positionAction->_yDimensionAction.createWidget(this);
 
-    _layout.addWidget(&_xDimensionLabel);
-    _layout.addWidget(new OptionAction::Widget(this, &positionAction->_xDimensionAction, false));
+    xDimensionLabel->setToolTip(positionAction->_xDimensionAction.toolTip());
+    yDimensionLabel->setToolTip(positionAction->_yDimensionAction.toolTip());
 
-    _layout.addWidget(&_yDimensionLabel);
-    _layout.addWidget(new OptionAction::Widget(this, &positionAction->_yDimensionAction, false));
+    switch (state)
+    {
+        case Widget::State::Standard:
+        {
+            auto layout = new QHBoxLayout();
 
-    setLayout(&_layout);
-}
+            layout->setMargin(0);
+            layout->addWidget(xDimensionLabel);
+            layout->addWidget(xDimensionWidget);
+            layout->addWidget(yDimensionLabel);
+            layout->addWidget(yDimensionWidget);
 
-PositionAction::PopupWidget::PopupWidget(QWidget* parent, PositionAction* positionAction):
-    WidgetAction::PopupWidget(parent, positionAction)
-{
-    auto layout = new QGridLayout();
+            setLayout(layout);
+            break;
+        }
 
-    layout->addWidget(new QLabel("X-dimension:"), 0, 0);
-    layout->addWidget(new OptionAction::Widget(this, &positionAction->_xDimensionAction), 0, 1);
+        case Widget::State::Popup:
+        {
+            auto layout = new QGridLayout();
 
-    layout->addWidget(new QLabel("Y-dimension:"), 1, 0);
-    layout->addWidget(new OptionAction::Widget(this, &positionAction->_yDimensionAction), 1, 1);
+            layout->addWidget(xDimensionLabel, 0, 0);
+            layout->addWidget(xDimensionWidget, 0, 1);
+            layout->addWidget(yDimensionLabel, 1, 0);
+            layout->addWidget(yDimensionWidget, 1, 1);
 
-    setLayout(layout);
+            setPopupLayout(layout);
+            break;
+        }
+
+        default:
+            break;
+    }
 }
