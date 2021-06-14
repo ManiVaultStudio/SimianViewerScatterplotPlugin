@@ -2,49 +2,25 @@
 
 #include "PluginAction.h"
 
-#include <QHBoxLayout>
-#include <QLabel>
-
 class ColorDataAction : public PluginAction
 {
-public:
-    class Widget : public PluginAction::Widget {
-    public:
-        Widget(QWidget* parent, ColorDataAction* coloringAction);
 
-    private:
-        QHBoxLayout     _layout;
+protected: // Widget
+
+    class Widget : public WidgetAction::Widget
+    {
+    protected:
+        Widget(QWidget* parent, ColorDataAction* colorDataAction, const Widget::State& state);
+
+        friend class ColorDataAction;
     };
 
-    class PopupWidget : public PluginAction::PopupWidget {
-    public:
-        PopupWidget(QWidget* parent, ColorDataAction* coloringAction);
-
-    private:
-        QHBoxLayout     _layout;
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this, state);
     };
 
 public:
     ColorDataAction(ScatterplotPlugin* scatterplotPlugin);
-
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
 
     QMenu* getContextMenu();
 

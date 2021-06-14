@@ -85,25 +85,27 @@ QMenu* RenderModeAction::getContextMenu()
     return menu;
 }
 
-RenderModeAction::Widget::Widget(QWidget* parent, RenderModeAction* renderModeAction) :
-    WidgetAction::Widget(parent, renderModeAction),
-    _layout()
+RenderModeAction::Widget::Widget(QWidget* parent, RenderModeAction* renderModeAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, renderModeAction, state)
 {
-    _layout.addWidget(new StandardAction::PushButton(this, &renderModeAction->_scatterPlotAction));
-    _layout.addWidget(new StandardAction::PushButton(this, &renderModeAction->_densityPlotAction));
-    _layout.addWidget(new StandardAction::PushButton(this, &renderModeAction->_contourPlotAction));
+    auto layout = new QHBoxLayout();
 
-    setLayout(&_layout);
-}
+    layout->addWidget(renderModeAction->_scatterPlotAction.createPushButtonWidget(this));
+    layout->addWidget(renderModeAction->_densityPlotAction.createPushButtonWidget(this));
+    layout->addWidget(renderModeAction->_contourPlotAction.createPushButtonWidget(this));
 
-RenderModeAction::PopupWidget::PopupWidget(QWidget* parent, RenderModeAction* renderModeAction) :
-    WidgetAction::PopupWidget(parent, renderModeAction)
-{
-    auto layout = new QVBoxLayout();
+    switch (state)
+    {
+        case Widget::State::Standard:
+            layout->setMargin(0);
+            setLayout(layout);
+            break;
 
-    layout->addWidget(new StandardAction::PushButton(this, &renderModeAction->_scatterPlotAction));
-    layout->addWidget(new StandardAction::PushButton(this, &renderModeAction->_densityPlotAction));
-    layout->addWidget(new StandardAction::PushButton(this, &renderModeAction->_contourPlotAction));
+        case Widget::State::Popup:
+            setPopupLayout(layout);
+            break;
 
-    setLayout(layout);
+        default:
+            break;
+    }
 }

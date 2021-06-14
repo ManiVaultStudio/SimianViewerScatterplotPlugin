@@ -6,47 +6,19 @@
 
 class PlotAction : public PluginAction
 {
-public:
+protected: // Widget
+
     class Widget : public PluginAction::Widget {
     public:
-        Widget(QWidget* parent, PlotAction* plotAction);
-
-    private:
-        QHBoxLayout                 _layout;
-        PointPlotAction::Widget     _pointPlotWidget;
-        DensityPlotAction::Widget   _densityPlotWidget;
+        Widget(QWidget* parent, PlotAction* plotAction, const Widget::State& state);
     };
 
-    class PopupWidget : public PluginAction::PopupWidget {
-    public:
-        PopupWidget(QWidget* parent, PlotAction* plotAction);
-
-    private:
-        PointPlotAction::PopupWidget    _pointPlotWidget;
-        DensityPlotAction::PopupWidget  _densityPlotWidget;
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this, state);
     };
 
 public:
     PlotAction(ScatterplotPlugin* scatterplotPlugin);
-
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
 
     QMenu* getContextMenu();
 

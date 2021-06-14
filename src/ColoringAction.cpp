@@ -138,28 +138,24 @@ void ColoringAction::setDimensions(const std::vector<QString>& dimensionNames)
     setDimensions(static_cast<std::uint32_t>(dimensionNames.size()), dimensionNames);
 }
 
-ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction) :
-    WidgetAction::Widget(parent, coloringAction),
-    _layout(),
-    _colorByLabel("Color by:"),
-    _colorByWidget(this, &coloringAction->_colorByAction, false),
-    _stackedWidget(),
-    _constantColorWidget(this, &coloringAction->_constantColorAction),
-    _colorDimensionWidget(this, &coloringAction->_colorDimensionAction),
-    _colorDataWidget(this, &coloringAction->_colorDataAction)
+ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, coloringAction, state)
 {
-    _layout.addWidget(&_colorByLabel);
-    _layout.addWidget(&_colorByWidget);
-    _layout.addWidget(&_stackedWidget);
+    auto layout = new QHBoxLayout();
 
-    _stackedWidget.addWidget(&_constantColorWidget);
-    _stackedWidget.addWidget(&_colorDimensionWidget);
-    _stackedWidget.addWidget(&_colorDataWidget);
+    layout->addWidget(new QLabel("Color by:"));
+    layout->addWidget(coloringAction->_colorByAction.createWidget(this));
 
-    setLayout(&_layout);
+    auto stackedWidget = new StackedWidget();
 
-    const auto coloringModeChanged = [this, coloringAction]() -> void {
-        _stackedWidget.setCurrentIndex(coloringAction->_colorByAction.getCurrentIndex());
+    layout->addWidget(stackedWidget);
+
+    stackedWidget->addWidget(coloringAction->_constantColorAction.createWidget(this));
+    stackedWidget->addWidget(coloringAction->_colorDimensionAction.createWidget(this));
+    stackedWidget->addWidget(coloringAction->_colorDataAction.createWidget(this));
+
+    const auto coloringModeChanged = [stackedWidget, coloringAction]() -> void {
+        stackedWidget->setCurrentIndex(coloringAction->_colorByAction.getCurrentIndex());
     };
 
     connect(&coloringAction->_colorByAction, &OptionAction::currentIndexChanged, this, [this, coloringModeChanged](const std::uint32_t& currentIndex) {
@@ -176,35 +172,19 @@ ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction) 
 
     renderModeChanged();
     coloringModeChanged();
-}
 
-ColoringAction::PopupWidget::PopupWidget(QWidget* parent, ColoringAction* coloringAction) :
-    WidgetAction::PopupWidget(parent, coloringAction),
-    _layout(),
-    _colorByLabel("Color by:"),
-    _colorByWidget(this, &coloringAction->_colorByAction, false),
-    _stackedWidget(),
-    _constantColorWidget(this, &coloringAction->_constantColorAction),
-    _colorDimensionWidget(this, &coloringAction->_colorDimensionAction),
-    _colorDataWidget(this, &coloringAction->_colorDataAction)
-{
-    _layout.addWidget(&_colorByLabel);
-    _layout.addWidget(&_colorByWidget);
-    _layout.addWidget(&_stackedWidget);
+    switch (state)
+    {
+        case Widget::State::Standard:
+            layout->setMargin(0);
+            setLayout(layout);
+            break;
 
-    _stackedWidget.addWidget(&_constantColorWidget);
-    _stackedWidget.addWidget(&_colorDimensionWidget);
-    _stackedWidget.addWidget(&_colorDataWidget);
+        case Widget::State::Popup:
+            setPopupLayout(layout);
+            break;
 
-    setLayout(&_layout);
-
-    const auto coloringModeChanged = [this, coloringAction]() -> void {
-        _stackedWidget.setCurrentIndex(coloringAction->_colorByAction.getCurrentIndex());
-    };
-
-    connect(&coloringAction->_colorByAction, &OptionAction::currentIndexChanged, this, [this, coloringModeChanged](const std::uint32_t& currentIndex) {
-        coloringModeChanged();
-    });
-
-    coloringModeChanged();
+        default:
+            break;
+    }
 }

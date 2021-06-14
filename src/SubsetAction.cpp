@@ -62,24 +62,26 @@ QMenu* SubsetAction::getContextMenu()
     return menu;
 }
 
-SubsetAction::Widget::Widget(QWidget* parent, SubsetAction* subsetAction) :
-    WidgetAction::Widget(parent, subsetAction),
-    _layout()
+SubsetAction::Widget::Widget(QWidget* parent, SubsetAction* subsetAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, subsetAction, state)
 {
-    _layout.addWidget(new StandardAction::PushButton(this, &subsetAction->_createSubsetAction));
-    _layout.addWidget(new OptionAction::Widget(this, &subsetAction->_sourceDataAction, false));
+    auto layout = new QHBoxLayout();
 
-    //_layout.itemAt(0)->widget()->setFixedWidth(80);
+    layout->addWidget(subsetAction->_createSubsetAction.createWidget(this));
+    layout->addWidget(subsetAction->_sourceDataAction.createWidget(this));
 
-    setLayout(&_layout);
-}
+    switch (state)
+    {
+        case Widget::State::Standard:
+            layout->setMargin(0);
+            setLayout(layout);
+            break;
 
-SubsetAction::PopupWidget::PopupWidget(QWidget* parent, SubsetAction* subsetAction) :
-    WidgetAction::PopupWidget(parent, subsetAction)
-{
-    auto layout = new QVBoxLayout();
+        case Widget::State::Popup:
+            setPopupLayout(layout);
+            break;
 
-    layout->addWidget(new SubsetAction::Widget(this, subsetAction));
-
-    setLayout(layout);
+        default:
+            break;
+    }
 }

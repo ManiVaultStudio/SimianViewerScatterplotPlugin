@@ -5,6 +5,7 @@
 #include "ScatterplotWidget.h"
 
 #include <QHBoxLayout>
+#include <QPushButton>
 
 using namespace hdps::gui;
 
@@ -283,74 +284,90 @@ bool SelectionAction::eventFilter(QObject* object, QEvent* event)
     return QObject::eventFilter(object, event);
 }
 
-SelectionAction::Widget::Widget(QWidget* parent, SelectionAction* selectionAction) :
-    WidgetAction::Widget(parent, selectionAction)
+SelectionAction::Widget::Widget(QWidget* parent, SelectionAction* selectionAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, selectionAction, state)
 {
-    auto layout = new QHBoxLayout();
+    auto typeWidget                     = selectionAction->_typeAction.createWidget(this);
+    auto brushRadiusWidget              = selectionAction->_brushRadiusAction.createWidget(this);
+    auto modifierAddWidget              = selectionAction->_modifierAddAction.createPushButtonWidget(this);
+    auto modifierRemoveWidget           = selectionAction->_modifierRemoveAction.createPushButtonWidget(this);
+    auto clearSelectionWidget           = selectionAction->_clearSelectionAction.createWidget(this);
+    auto selectAllWidget                = selectionAction->_selectAllAction.createWidget(this);
+    auto invertSelectionWidget          = selectionAction->_invertSelectionAction.createWidget(this);
+    auto notifyDuringSelectionWidget    = selectionAction->_notifyDuringSelectionAction.createWidget(this);
 
-    layout->addWidget(new OptionAction::Widget(this, &selectionAction->_typeAction, false));
-    layout->addWidget(new DecimalAction::Widget(this, &selectionAction->_brushRadiusAction, DecimalAction::Widget::Slider));
-    layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_modifierAddAction, StandardAction::PushButton::Icon));
-    layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_modifierRemoveAction, StandardAction::PushButton::Icon));
-    layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_clearSelectionAction));
-    layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_selectAllAction));
-    layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_invertSelectionAction));
-    layout->addWidget(new StandardAction::CheckBox(this, &selectionAction->_notifyDuringSelectionAction));
+    switch (state)
+    {
+        case Widget::State::Standard:
+        {
+            auto layout = new QHBoxLayout();
 
-    setLayout(layout);
-}
+            layout->setMargin(0);
+            layout->addWidget(typeWidget);
+            layout->addWidget(brushRadiusWidget);
+            layout->addWidget(modifierAddWidget);
+            layout->addWidget(modifierRemoveWidget);
+            layout->addWidget(clearSelectionWidget);
+            layout->addWidget(selectAllWidget);
+            layout->addWidget(invertSelectionWidget);
+            layout->addWidget(notifyDuringSelectionWidget);
 
-SelectionAction::PopupWidget::PopupWidget(QWidget* parent, SelectionAction* selectionAction) :
-    WidgetAction::PopupWidget(parent, selectionAction)
-{
-    auto layout = new QGridLayout();
+            setLayout(layout);
+            break;
+        }
 
-    const auto getTypeWidget = [this, selectionAction]() -> QWidget* {
-        auto layout = new QHBoxLayout();
+        case Widget::State::Popup:
+        {
+            const auto getTypeWidget = [&, this]() -> QWidget* {
+                modifierAddWidget->getPushButton()->setText("");
+                modifierRemoveWidget->getPushButton()->setText("");
 
-        layout->setMargin(0);
+                auto layout = new QHBoxLayout();
 
-        layout->addWidget(new OptionAction::Widget(this, &selectionAction->_typeAction, false));
-        layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_modifierAddAction, StandardAction::PushButton::Icon));
-        layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_modifierRemoveAction, StandardAction::PushButton::Icon));
+                layout->setMargin(0);
+                layout->addWidget(typeWidget);
+                layout->addWidget(modifierAddWidget);
+                layout->addWidget(modifierRemoveWidget);
+                layout->itemAt(0)->widget()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-        layout->itemAt(0)->widget()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+                auto widget = new QWidget();
 
-        auto widget = new QWidget();
+                widget->setLayout(layout);
 
-        widget->setLayout(layout);
+                return widget;
+            };
 
-        return widget;
-    };
+            const auto getSelectWidget = [&, this]() -> QWidget* {
+                auto layout = new QHBoxLayout();
 
-    const auto getSelectWidget = [this, selectionAction]() -> QWidget* {
-        auto layout = new QHBoxLayout();
+                layout->setMargin(0);
+                layout->addWidget(clearSelectionWidget);
+                layout->addWidget(selectAllWidget);
+                layout->addWidget(invertSelectionWidget);
+                layout->addStretch(1);
 
-        layout->setMargin(0);
+                auto widget = new QWidget();
 
-        layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_clearSelectionAction));
-        layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_selectAllAction));
-        layout->addWidget(new StandardAction::PushButton(this, &selectionAction->_invertSelectionAction));
-        layout->addStretch(1);
+                widget->setLayout(layout);
 
-        auto widget = new QWidget();
+                return widget;
+            };
 
-        widget->setLayout(layout);
+            auto layout = new QGridLayout();
 
-        return widget;
-    };
+            layout->addWidget(new QLabel("Type:"), 0, 0);
+            layout->addWidget(getTypeWidget(), 0, 1);
+            layout->addWidget(new QLabel("Brush radius:"), 1, 0);
+            layout->addWidget(brushRadiusWidget, 1, 1);
+            layout->addWidget(getSelectWidget(), 2, 1);
+            layout->addWidget(notifyDuringSelectionWidget, 3, 1);
+            layout->itemAtPosition(1, 1)->widget()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    layout->addWidget(new QLabel("Type:"), 0, 0);
-    layout->addWidget(getTypeWidget(), 0, 1);
-    
-    layout->addWidget(new QLabel("Brush radius:"), 1, 0);
-    layout->addWidget(new DecimalAction::Widget(this, &selectionAction->_brushRadiusAction), 1, 1);
+            setPopupLayout(layout);
+            break;
+        }
 
-    layout->addWidget(getSelectWidget(), 2, 1);
-
-    layout->addWidget(new StandardAction::CheckBox(this, &selectionAction->_notifyDuringSelectionAction), 3, 1);
-
-    layout->itemAtPosition(1, 1)->widget()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-
-    setLayout(layout);
+        default:
+            break;
+    }
 }

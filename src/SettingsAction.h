@@ -24,7 +24,7 @@ public:
     public:
         SpacerWidget(const Type& type = Type::Divider);
 
-        static Type getType(const WidgetAction::WidgetType& widgetTypeLeft, const WidgetAction::WidgetType& widgetTypeRight);
+        static Type getType(const WidgetAction::Widget::State& widgetTypeLeft, const WidgetAction::Widget::State& widgetTypeRight);
         static Type getType(const WidgetAction::StateWidget* stateWidgetLeft, const WidgetAction::StateWidget* stateWidgetRight);
 
         void setType(const Type& type);
@@ -35,6 +35,8 @@ public:
         QHBoxLayout*    _layout;
         QFrame*         _verticalLine;
     };
+
+protected: // Widget
 
     class Widget : public PluginAction::Widget {
     public:
@@ -48,35 +50,22 @@ public:
     private:
         void updateLayout();
 
-    private:
+    protected:
         QHBoxLayout             _layout;
         QWidget                 _toolBarWidget;
         QHBoxLayout             _toolBarLayout;
         QVector<StateWidget*>   _stateWidgets;
         QVector<SpacerWidget*>  _spacerWidgets;
+
+        friend class SettingsAction;
+    };
+
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this);
     };
 
 public:
     SettingsAction(ScatterplotPlugin* scatterplotPlugin);
-
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
 
     QMenu* getContextMenu();
 

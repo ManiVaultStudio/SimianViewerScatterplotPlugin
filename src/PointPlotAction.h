@@ -6,43 +6,19 @@
 
 class PointPlotAction : public PluginAction
 {
-public:
+protected: // Widget
+
     class Widget : public PluginAction::Widget {
     public:
-        Widget(QWidget* parent, PointPlotAction* pointPlotAction);
-
-    private:
-        QHBoxLayout     _layout;
-        QLabel          _pointSizelabel;
-        QLabel          _pointOpacitylabel;
+        Widget(QWidget* parent, PointPlotAction* pointPlotAction, const Widget::State& state);
     };
 
-    class PopupWidget : public PluginAction::PopupWidget {
-    public:
-        PopupWidget(QWidget* parent, PointPlotAction* pointPlotAction);
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this, state);
     };
 
 public:
     PointPlotAction(ScatterplotPlugin* scatterplotPlugin);
-
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
 
     QMenu* getContextMenu();
 
@@ -54,4 +30,5 @@ protected:
     static constexpr double DEFAULT_POINT_OPACITY = 50.0;
 
     friend class Widget;
+    friend class PlotAction;
 };

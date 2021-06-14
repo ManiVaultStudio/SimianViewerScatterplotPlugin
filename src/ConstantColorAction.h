@@ -4,44 +4,24 @@
 
 class ConstantColorAction : public PluginAction
 {
-public:
+protected:
     class Widget : public PluginAction::Widget {
     public:
-        Widget(QWidget* parent, ConstantColorAction* colorByConstantAction);
+        Widget(QWidget* parent, ConstantColorAction* colorByConstantAction, const Widget::State& state);
     };
 
-    class PopupWidget : public PluginAction::Widget {
-    public:
-        PopupWidget(QWidget* parent, ConstantColorAction* colorByConstantAction);
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this, state);
     };
 
 public:
     ConstantColorAction(ScatterplotPlugin* scatterplotPlugin);
 
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
-
     QMenu* getContextMenu();
 
 protected:
     hdps::gui::ColorAction      _constantColorAction;
-    hdps::gui::StandardAction   _resetAction;
+    hdps::gui::TriggerAction    _resetAction;
 
     static const QColor DEFAULT_COLOR;
 

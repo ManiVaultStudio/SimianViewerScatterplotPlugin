@@ -12,7 +12,7 @@
 
 class ColoringAction : public PluginAction
 {
-public:
+protected: // Widget
     class StackedWidget : public QStackedWidget {
     public:
         QSize sizeHint() const override { return currentWidget()->sizeHint(); }
@@ -21,53 +21,15 @@ public:
 
     class Widget : public PluginAction::Widget {
     public:
-        Widget(QWidget* parent, ColoringAction* coloringAction);
-
-    protected:
-        QHBoxLayout                         _layout;
-        QLabel                              _colorByLabel;
-        hdps::gui::OptionAction::Widget     _colorByWidget;
-        StackedWidget                       _stackedWidget;
-        ConstantColorAction::Widget         _constantColorWidget;
-        ColorDimensionAction::Widget        _colorDimensionWidget;
-        ColorDataAction::Widget             _colorDataWidget;
+        Widget(QWidget* parent, ColoringAction* coloringAction, const Widget::State& state);
     };
 
-    class PopupWidget : public PluginAction::PopupWidget {
-    public:
-        PopupWidget(QWidget* parent, ColoringAction* coloringAction);
-
-    protected:
-        QHBoxLayout                         _layout;
-        QLabel                              _colorByLabel;
-        hdps::gui::OptionAction::Widget     _colorByWidget;
-        StackedWidget                       _stackedWidget;
-        ConstantColorAction::Widget         _constantColorWidget;
-        ColorDimensionAction::Widget        _colorDimensionWidget;
-        ColorDataAction::Widget             _colorDataWidget;
+    QWidget* getWidget(QWidget* parent, const Widget::State& state = Widget::State::Standard) override {
+        return new Widget(parent, this, state);
     };
 
 public:
     ColoringAction(ScatterplotPlugin* scatterplotPlugin);
-
-    QWidget* createWidget(QWidget* parent, const WidgetType& widgetType = WidgetType::Standard) override {
-        switch (widgetType)
-        {
-            case WidgetType::Standard:
-                return new Widget(parent, this);
-
-            case WidgetType::Compact:
-                return new CompactWidget(parent, this);
-
-            case WidgetType::Popup:
-                return new PopupWidget(parent, this);
-
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
 
     QMenu* getContextMenu();
     
@@ -80,9 +42,9 @@ public:
 
 protected:
     hdps::gui::OptionAction     _colorByAction;
-    hdps::gui::StandardAction   _colorByConstantColorAction;
-    hdps::gui::StandardAction   _colorByDimensionAction;
-    hdps::gui::StandardAction   _colorByColorDataAction;
+    hdps::gui::TriggerAction    _colorByConstantColorAction;
+    hdps::gui::TriggerAction    _colorByDimensionAction;
+    hdps::gui::TriggerAction    _colorByColorDataAction;
     QActionGroup                _colorByActionGroup;
     ConstantColorAction         _constantColorAction;
     ColorDimensionAction        _colorDimensionAction;

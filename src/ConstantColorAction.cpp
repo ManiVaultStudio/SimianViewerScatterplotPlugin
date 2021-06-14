@@ -69,22 +69,24 @@ QMenu* ConstantColorAction::getContextMenu()
     return menu;
 }
 
-ConstantColorAction::Widget::Widget(QWidget* parent, ConstantColorAction* constantColorAction) :
-    WidgetAction::Widget(parent, constantColorAction)
+ConstantColorAction::Widget::Widget(QWidget* parent, ConstantColorAction* colorByConstantAction, const Widget::State& state) :
+    WidgetAction::Widget(parent, colorByConstantAction, state)
 {
-    auto layout = new QHBoxLayout();
+    switch (state)
+    {
+        case Widget::State::Standard:
+        case Widget::State::Popup:
+        {
+            auto layout = new QHBoxLayout();
 
-    layout->addWidget(new ColorAction::Widget(this, &constantColorAction->_constantColorAction, false));
+            layout->setMargin(0);
+            layout->addWidget(colorByConstantAction->_constantColorAction.createWidget(this));
 
-    setLayout(layout);
-}
+            setLayout(layout);
+            break;
+        }
 
-ConstantColorAction::PopupWidget::PopupWidget(QWidget* parent, ConstantColorAction* constantColorAction) :
-    WidgetAction::Widget(parent, constantColorAction)
-{
-    auto layout = new QHBoxLayout();
-
-    layout->addWidget(new ColorAction::PopupWidget(this, &constantColorAction->_constantColorAction));
-
-    setLayout(layout);
+        default:
+            break;
+    }
 }
