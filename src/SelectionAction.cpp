@@ -289,8 +289,8 @@ SelectionAction::Widget::Widget(QWidget* parent, SelectionAction* selectionActio
 {
     auto typeWidget                     = selectionAction->_typeAction.createWidget(this);
     auto brushRadiusWidget              = selectionAction->_brushRadiusAction.createWidget(this);
-    auto modifierAddWidget              = dynamic_cast<ToggleAction::Widget*>(selectionAction->_modifierAddAction.createWidget(this));
-    auto modifierRemoveWidget           = dynamic_cast<ToggleAction::Widget*>(selectionAction->_modifierRemoveAction.createWidget(this));
+    auto modifierAddWidget              = selectionAction->_modifierAddAction.createPushButtonWidget(this);
+    auto modifierRemoveWidget           = selectionAction->_modifierRemoveAction.createPushButtonWidget(this);
     auto clearSelectionWidget           = selectionAction->_clearSelectionAction.createWidget(this);
     auto selectAllWidget                = selectionAction->_selectAllAction.createWidget(this);
     auto invertSelectionWidget          = selectionAction->_invertSelectionAction.createWidget(this);

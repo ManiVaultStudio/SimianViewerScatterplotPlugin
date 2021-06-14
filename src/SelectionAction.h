@@ -46,7 +46,7 @@ protected:
     hdps::gui::TriggerAction    _clearSelectionAction;
     hdps::gui::TriggerAction    _selectAllAction;
     hdps::gui::TriggerAction    _invertSelectionAction;
-    hdps::gui::CheckAction      _notifyDuringSelectionAction;
+    hdps::gui::ToggleAction     _notifyDuringSelectionAction;
 
     friend class Widget;
 };
