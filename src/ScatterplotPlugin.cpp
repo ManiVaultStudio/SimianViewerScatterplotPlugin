@@ -20,11 +20,14 @@
 #include <QApplication>
 #include <QDebug>
 #include <QMenu>
+#include <QAction>
+#include <QMetaType>
 
 #include <algorithm>
 #include <functional>
 #include <limits>
 #include <set>
+#include <vector>
 
 Q_PLUGIN_METADATA(IID "nl.tudelft.ScatterplotPlugin")
 
@@ -150,6 +153,34 @@ void ScatterplotPlugin::init()
 
     updateWindowTitle();
 }
+
+#ifndef QT_NO_CONTEXTMENU
+void ScatterplotPlugin::contextMenuEvent(QContextMenuEvent *event)
+{
+    if (_currentDataSet.isEmpty())
+        return;
+
+    QMenu menu(this);
+    
+    DataSet& dataSet = _core->requestData(_currentDataSet);
+   
+    const auto analyses = dataSet.getProperty("Analyses", QVariantList()).toList();
+    
+    for (auto analysis : analyses)
+    {
+        auto& analysisPlugin = _core->requestAnalysis(analysis.toString());
+
+        QMap<QString, QString> context;
+
+        context["Kind"]             = "ScatterPlotPlugin";
+        context["CurrentDataset"]   = _currentDataSet;
+
+        menu.addMenu(analysisPlugin.contextMenu(QVariant::fromValue(context)));
+    }
+    
+    menu.exec(event->globalPos());
+}
+#endif // QT_NO_CONTEXTMENU
 
 void ScatterplotPlugin::onDataEvent(DataEvent* dataEvent)
 {
@@ -423,11 +454,37 @@ void ScatterplotPlugin::calculateScalars(std::vector<float>& scalars, const Poin
 void ScatterplotPlugin::updateSelection()
 {
     const Points& points = _core->requestData<Points>(_currentDataSet);
-    const Points& selection = static_cast<Points&>(points.getSelection());
+    Points& selection = static_cast<Points&>(points.getSelection());
 
     std::vector<bool> selected;
     std::vector<char> highlights;
 
+    points.selectedLocalIndices(selection.indices, selected);
+
+    // TEMP HSNE selection
+    {
+        // Check if shown dataset is an HSNE embedding with a hierarchy
+        if (points.hasProperty("scale"))
+        {
+            int scale = points.getProperty("scale").value<int>();
+
+            if (scale > 0)
+            {
+                std::vector<std::vector<unsigned int>> landmarkMap = points.getProperty("landmarkMap").value<std::vector<std::vector<unsigned int>>>();
+                
+                std::vector<unsigned int> dataLevelSelection;
+                for (int i = 0; i < selected.size(); i++)
+                {
+                    if (selected[i])
+                        dataLevelSelection.insert(dataLevelSelection.end(), landmarkMap[i].begin(), landmarkMap[i].end());
+                }
+
+                selection.indices.insert(selection.indices.end(), dataLevelSelection.begin(), dataLevelSelection.end());
+            }
+        }
+    }
+
+    selected.clear();
     points.selectedLocalIndices(selection.indices, selected);
 
     highlights.resize(points.getNumPoints(), 0);
