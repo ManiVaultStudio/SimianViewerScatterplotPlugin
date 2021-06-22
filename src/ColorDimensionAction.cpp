@@ -7,6 +7,7 @@
 using namespace hdps::gui;
 
 #include <QHBoxLayout>
+#include <QComboBox>
 
 ColorDimensionAction::ColorDimensionAction(ScatterplotPlugin* scatterplotPlugin) :
     PluginAction(scatterplotPlugin, "Coloring"),
@@ -58,8 +59,12 @@ ColorDimensionAction::Widget::Widget(QWidget* parent, ColorDimensionAction* colo
 {
     auto layout = new QHBoxLayout();
 
+    auto colorDimensionWidget = dynamic_cast<OptionAction::Widget*>(colorDimensionAction->_colorDimensionAction.createWidget(this));
+    
+    colorDimensionWidget->getComboBox()->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+
     layout->setMargin(0);
-    layout->addWidget(colorDimensionAction->_colorDimensionAction.createWidget(this));
+    layout->addWidget(colorDimensionWidget);
 
     setLayout(layout);
 }

@@ -4,6 +4,7 @@
 #include "ScatterplotPlugin.h"
 
 #include <QMenu>
+#include <QComboBox>
 
 using namespace hdps::gui;
 
@@ -81,11 +82,14 @@ PositionAction::Widget::Widget(QWidget* parent, PositionAction* positionAction, 
 {
     auto xDimensionLabel    = new QLabel("X-dimension:");
     auto yDimensionLabel    = new QLabel("Y-dimension:");
-    auto xDimensionWidget   = positionAction->_xDimensionAction.createWidget(this);
-    auto yDimensionWidget   = positionAction->_yDimensionAction.createWidget(this);
+    auto xDimensionWidget   = dynamic_cast<OptionAction::Widget*>(positionAction->_xDimensionAction.createWidget(this));
+    auto yDimensionWidget   = dynamic_cast<OptionAction::Widget*>(positionAction->_yDimensionAction.createWidget(this));
 
     xDimensionLabel->setToolTip(positionAction->_xDimensionAction.toolTip());
     yDimensionLabel->setToolTip(positionAction->_yDimensionAction.toolTip());
+    
+    xDimensionWidget->getComboBox()->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    yDimensionWidget->getComboBox()->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
     switch (state)
     {
