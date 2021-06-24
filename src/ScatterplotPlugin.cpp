@@ -55,7 +55,28 @@ ScatterplotPlugin::ScatterplotPlugin() :
         if (_currentDataSet.isEmpty())
             return;
 
-        _settingsAction.getContextMenu()->exec(mapToGlobal(point));
+        auto contextMenu = _settingsAction.getContextMenu();
+        
+        DataSet& dataSet = _core->requestData(_currentDataSet);
+
+        const auto analyses = dataSet.getProperty("Analyses", QVariantList()).toList();
+        
+        if (!analyses.isEmpty())
+            contextMenu->addSeparator();
+
+        for (auto analysis : analyses)
+        {
+            auto& analysisPlugin = _core->requestAnalysis(analysis.toString());
+
+            QMap<QString, QString> context;
+
+            context["Kind"] = "ScatterPlotPlugin";
+            context["CurrentDataset"] = _currentDataSet;
+
+            contextMenu->addMenu(analysisPlugin.contextMenu(QVariant::fromValue(context)));
+        }
+
+        contextMenu->exec(mapToGlobal(point));
     });
 
     _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(this, "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
@@ -153,34 +174,6 @@ void ScatterplotPlugin::init()
 
     updateWindowTitle();
 }
-
-#ifndef QT_NO_CONTEXTMENU
-void ScatterplotPlugin::contextMenuEvent(QContextMenuEvent *event)
-{
-    if (_currentDataSet.isEmpty())
-        return;
-
-    QMenu menu(this);
-    
-    DataSet& dataSet = _core->requestData(_currentDataSet);
-   
-    const auto analyses = dataSet.getProperty("Analyses", QVariantList()).toList();
-    
-    for (auto analysis : analyses)
-    {
-        auto& analysisPlugin = _core->requestAnalysis(analysis.toString());
-
-        QMap<QString, QString> context;
-
-        context["Kind"]             = "ScatterPlotPlugin";
-        context["CurrentDataset"]   = _currentDataSet;
-
-        menu.addMenu(analysisPlugin.contextMenu(QVariant::fromValue(context)));
-    }
-    
-    menu.exec(event->globalPos());
-}
-#endif // QT_NO_CONTEXTMENU
 
 void ScatterplotPlugin::onDataEvent(DataEvent* dataEvent)
 {
