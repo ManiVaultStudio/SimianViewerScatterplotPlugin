@@ -291,10 +291,16 @@ bool PixelSelectionTool::eventFilter(QObject* target, QEvent* event)
                 case Type::Rectangle:
                 {
                     if (mouseEvent->buttons() & Qt::LeftButton) {
-                        if (_mousePositions.size() == 1)
+                        if (_mousePositions.size() == 1) {
                             _mousePositions << _mousePosition;
-                        else
-                            _mousePositions.last() = _mousePosition;
+                        } else {
+                            if (_mousePositions.isEmpty()) {
+                                _mousePositions << _mousePosition;
+                            }
+                            else {
+                                _mousePositions.last() = _mousePosition;
+                            }
+                        }
                     }
 
                     if (isActive())
