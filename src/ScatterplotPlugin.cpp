@@ -288,6 +288,41 @@ void ScatterplotPlugin::selectPoints()
 
     selectionSetIndices = targetIndices;
 
+    std::vector<bool> selected;
+    points.selectedLocalIndices(selectionSetIndices, selected);
+
+    // TEMP HSNE selection
+    {
+        // Check if shown dataset is an HSNE embedding with a hierarchy
+        if (points.hasProperty("scale"))
+        {
+            int scale = points.getProperty("scale").value<int>();
+
+            if (scale > 0)
+            {
+                // Store the additionally selected points in a separate array not to cloud the for loop
+                std::vector<unsigned int> extraSelectionIndices;
+                extraSelectionIndices.reserve(selectionSetIndices.size()); // Reserve space at least as big as the current selected
+
+                std::vector<std::vector<unsigned int>> landmarkMap = points.getProperty("landmarkMap").value<std::vector<std::vector<unsigned int>>>();
+                qDebug() << "Called broaden func: " << selectionSetIndices.size();
+                qDebug() << landmarkMap.size() << landmarkMap[scale].size();
+                
+                for (int i = 0; i < selected.size(); i++)
+                {
+                    if (selected[i])
+                        extraSelectionIndices.insert(extraSelectionIndices.end(), landmarkMap[i].begin(), landmarkMap[i].end());
+                }
+                //for (unsigned int& i: selectionSetIndices)
+                //    extraSelectionIndices.insert(extraSelectionIndices.end(), landmarkMap[i].begin(), landmarkMap[i].end());
+
+                selectionSetIndices.insert(selectionSetIndices.end(), extraSelectionIndices.begin(), extraSelectionIndices.end());
+                qDebug() << "Broadened selection: " << selectionSetIndices.size();
+                //_core->notifySelectionChanged(_currentDataSet);
+            }
+        }
+    }
+
     _core->notifySelectionChanged(points.getName());
 }
 
@@ -452,32 +487,6 @@ void ScatterplotPlugin::updateSelection()
     std::vector<bool> selected;
     std::vector<char> highlights;
 
-    points.selectedLocalIndices(selection.indices, selected);
-
-    // TEMP HSNE selection
-    {
-        // Check if shown dataset is an HSNE embedding with a hierarchy
-        if (points.hasProperty("scale"))
-        {
-            int scale = points.getProperty("scale").value<int>();
-
-            if (scale > 0)
-            {
-                std::vector<std::vector<unsigned int>> landmarkMap = points.getProperty("landmarkMap").value<std::vector<std::vector<unsigned int>>>();
-                
-                std::vector<unsigned int> dataLevelSelection;
-                for (int i = 0; i < selected.size(); i++)
-                {
-                    if (selected[i])
-                        dataLevelSelection.insert(dataLevelSelection.end(), landmarkMap[i].begin(), landmarkMap[i].end());
-                }
-
-                selection.indices.insert(selection.indices.end(), dataLevelSelection.begin(), dataLevelSelection.end());
-            }
-        }
-    }
-
-    selected.clear();
     points.selectedLocalIndices(selection.indices, selected);
 
     highlights.resize(points.getNumPoints(), 0);
