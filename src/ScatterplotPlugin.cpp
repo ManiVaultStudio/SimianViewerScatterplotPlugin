@@ -232,6 +232,7 @@ void ScatterplotPlugin::selectPoints()
     const auto& set         = points.isDerivedData() ? DataSet::getSourceData(points) : points;
     const auto& setIndices  = set.indices;
 
+    std::vector<unsigned int> localIndices;
     for (unsigned int i = 0; i < _points.size(); i++) {
         const auto uvNormalized     = QPointF((_points[i].x - dataBounds.getLeft()) / dataBounds.getWidth(), (dataBounds.getTop() - _points[i].y) / dataBounds.getHeight());
         const auto uvOffset         = QPoint((selectionAreaImage.width() - size) / 2.0f, (selectionAreaImage.height() - size) / 2.0f);
@@ -240,6 +241,7 @@ void ScatterplotPlugin::selectPoints()
         if (selectionAreaImage.pixelColor(uv).alpha() > 0) {
             int globalIndex = localGlobalIndices[i];
             targetIndices.push_back(globalIndex);
+            localIndices.push_back(i); // FIXME Find more performant way to add this
         }
     }
     
@@ -286,13 +288,19 @@ void ScatterplotPlugin::selectPoints()
             break;
     }
 
-    selectionSetIndices = targetIndices;
-
-    std::vector<bool> selected;
-    points.selectedLocalIndices(selectionSetIndices, selected);
-
+    selectionSetIndices = targetIndices; // Global selection indices
+    
     // TEMP HSNE selection
     {
+        // Transmute local indices by drill indices specifying relation to full hierarchy scale
+        if (points.hasProperty("drill_indices"))
+        {
+            QList<uint32_t> drillIndices = points.getProperty("drill_indices").value<QList<uint32_t>>();
+
+            for (int i = 0; i < localIndices.size(); i++)
+                localIndices[i] = drillIndices[localIndices[i]];
+        }
+
         // Check if shown dataset is an HSNE embedding with a hierarchy
         if (points.hasProperty("scale"))
         {
@@ -305,20 +313,14 @@ void ScatterplotPlugin::selectPoints()
                 extraSelectionIndices.reserve(selectionSetIndices.size()); // Reserve space at least as big as the current selected
 
                 std::vector<std::vector<unsigned int>> landmarkMap = points.getProperty("landmarkMap").value<std::vector<std::vector<unsigned int>>>();
-                qDebug() << "Called broaden func: " << selectionSetIndices.size();
-                qDebug() << landmarkMap.size() << landmarkMap[scale].size();
+                //qDebug() << "Called broaden func: " << selectionSetIndices.size();
+                //qDebug() << landmarkMap.size() << landmarkMap[scale].size();
                 
-                for (int i = 0; i < selected.size(); i++)
-                {
-                    if (selected[i])
-                        extraSelectionIndices.insert(extraSelectionIndices.end(), landmarkMap[i].begin(), landmarkMap[i].end());
-                }
-                //for (unsigned int& i: selectionSetIndices)
-                //    extraSelectionIndices.insert(extraSelectionIndices.end(), landmarkMap[i].begin(), landmarkMap[i].end());
+                for (unsigned int localIndex : localIndices)
+                    extraSelectionIndices.insert(extraSelectionIndices.end(), landmarkMap[localIndex].begin(), landmarkMap[localIndex].end());
 
                 selectionSetIndices.insert(selectionSetIndices.end(), extraSelectionIndices.begin(), extraSelectionIndices.end());
-                qDebug() << "Broadened selection: " << selectionSetIndices.size();
-                //_core->notifySelectionChanged(_currentDataSet);
+                //qDebug() << "Broadened selection: " << selectionSetIndices.size();
             }
         }
     }
