@@ -15,7 +15,8 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
     _colorByActionGroup(this),
     _constantColorAction(scatterplotPlugin),
     _colorDimensionAction(scatterplotPlugin),
-    _colorDataAction(scatterplotPlugin)
+    _colorDataAction(scatterplotPlugin),
+    _backgroundColorAction(scatterplotPlugin)
 {
     scatterplotPlugin->addAction(&_colorByAction);
     scatterplotPlugin->addAction(&_colorByDimensionAction);
@@ -32,6 +33,7 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
     _constantColorAction.setToolTip("Constant color");
     _colorDimensionAction.setToolTip("Color dimension");
     _colorDataAction.setToolTip("Color data");
+    _backgroundColorAction.setToolTip("Background color");
 
     _colorByConstantColorAction.setCheckable(true);
     _colorByDimensionAction.setCheckable(true);
@@ -125,6 +127,8 @@ QMenu* ColoringAction::getContextMenu()
             break;
     }
 
+    menu->addAction(&_backgroundColorAction);
+
     return menu;
 }
 
@@ -143,12 +147,7 @@ ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction, 
 {
     auto layout = new QHBoxLayout();
 
-    layout->addWidget(new QLabel("Color by:"));
-    layout->addWidget(coloringAction->_colorByAction.createWidget(this));
-
     auto stackedWidget = new StackedWidget();
-
-    layout->addWidget(stackedWidget);
 
     stackedWidget->addWidget(coloringAction->_constantColorAction.createWidget(this));
     stackedWidget->addWidget(coloringAction->_colorDimensionAction.createWidget(this));
@@ -175,16 +174,36 @@ ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction, 
 
     switch (state)
     {
-        case Widget::State::Standard:
-            layout->setMargin(0);
-            setLayout(layout);
-            break;
+    case Widget::State::Standard:
+    {
+        auto layout = new QHBoxLayout();
 
-        case Widget::State::Popup:
-            setPopupLayout(layout);
-            break;
+        layout->setMargin(0);
+        layout->addWidget(new QLabel("Color by:"));
+        layout->addWidget(coloringAction->_colorByAction.createWidget(this));
+        layout->addWidget(stackedWidget);
+        layout->addWidget(new QLabel("Background color:"));
+        layout->addWidget(coloringAction->_backgroundColorAction.createWidget(this));
 
-        default:
-            break;
+        setLayout(layout);
+        break;
+    }
+
+    case Widget::State::Popup:
+    {
+        auto layout = new QGridLayout();
+
+        layout->addWidget(new QLabel("Color by:"), 0, 0);
+        layout->addWidget(coloringAction->_colorByAction.createWidget(this), 0, 1);
+        layout->addWidget(stackedWidget, 0, 2);
+        layout->addWidget(new QLabel("Background color:"), 1, 0);
+        layout->addWidget(coloringAction->_backgroundColorAction.createWidget(this), 1, 2);
+
+        setPopupLayout(layout);
+        break;
+    }
+
+    default:
+        break;
     }
 }

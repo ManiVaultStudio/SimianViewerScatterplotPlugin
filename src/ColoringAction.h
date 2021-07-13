@@ -5,6 +5,7 @@
 #include "ConstantColorAction.h"
 #include "ColorDimensionAction.h"
 #include "ColorDataAction.h"
+#include "BackgroundColorAction.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -36,6 +37,7 @@ public:
     ConstantColorAction& getConstantColorAction() { return _constantColorAction; }
     ColorDimensionAction& getColorDimensionAction() { return _colorDimensionAction; }
     ColorDataAction& getColorDataAction() { return _colorDataAction; }
+    BackgroundColorAction& getBackgroundColorAction() { return _backgroundColorAction; }
 
     void setDimensions(const std::uint32_t& numberOfDimensions, const std::vector<QString>& dimensionNames = std::vector<QString>());
     void setDimensions(const std::vector<QString>& dimensionNames);
@@ -49,6 +51,7 @@ protected:
     ConstantColorAction         _constantColorAction;
     ColorDimensionAction        _colorDimensionAction;
     ColorDataAction             _colorDataAction;
+    BackgroundColorAction       _backgroundColorAction;
 
     friend class Widget;
 };
