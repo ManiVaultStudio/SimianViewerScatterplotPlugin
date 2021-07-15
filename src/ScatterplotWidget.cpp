@@ -32,6 +32,7 @@ namespace
 
 ScatterplotWidget::ScatterplotWidget(PixelSelectionTool& pixelSelectionTool) :
     _densityRenderer(DensityRenderer::RenderMode::DENSITY),
+    _backgroundColor(1, 1, 1),
     _colormapWidget(this),
     _pointRenderer(),
     _pixelSelectionToolRenderer(pixelSelectionTool),
@@ -176,6 +177,18 @@ void ScatterplotWidget::setData(const std::vector<Vector2f>* points)
     update();
 }
 
+QColor ScatterplotWidget::getBackgroundColor()
+{
+    return _backgroundColor;
+}
+
+void ScatterplotWidget::setBackgroundColor(QColor color)
+{
+    _backgroundColor = color;
+
+    update();
+}
+
 void ScatterplotWidget::setHighlights(const std::vector<char>& highlights)
 {
     _pointRenderer.setHighlights(highlights);
@@ -311,7 +324,7 @@ void ScatterplotWidget::paintGL()
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
 
     // Clear the widget to the background color
-    glClearColor(1, 1, 1, 1);
+    glClearColor(_backgroundColor.redF(), _backgroundColor.greenF(), _backgroundColor.blueF(), _backgroundColor.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Reset the blending function

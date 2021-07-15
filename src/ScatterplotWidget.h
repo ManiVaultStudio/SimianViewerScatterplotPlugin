@@ -53,6 +53,10 @@ public:
     RenderMode getRenderMode() const;
     void setRenderMode(const RenderMode& renderMode);
 
+    /** Get/set background color */
+    QColor getBackgroundColor();
+    void setBackgroundColor(QColor color);
+
     /** Get/set coloring mode */
     ColoringMode getColoringMode() const;
     void setColoringMode(const ColoringMode& coloringMode);
@@ -127,6 +131,7 @@ private:
     Matrix3f                    toIsotropicCoordinates;
     bool                        _isInitialized = false;
     RenderMode                  _renderMode = SCATTERPLOT;
+    QColor                      _backgroundColor;
     ColoringMode                _coloringMode = ColoringMode::ConstantColor;
     PointRenderer               _pointRenderer;                     
     DensityRenderer             _densityRenderer;                   

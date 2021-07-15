@@ -17,6 +17,8 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
     _colorDimensionAction(scatterplotPlugin),
     _colorDataAction(scatterplotPlugin)
 {
+    setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("palette"));
+
     scatterplotPlugin->addAction(&_colorByAction);
     scatterplotPlugin->addAction(&_colorByDimensionAction);
     scatterplotPlugin->addAction(&_colorByColorDataAction);
@@ -143,12 +145,7 @@ ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction, 
 {
     auto layout = new QHBoxLayout();
 
-    layout->addWidget(new QLabel("Color by:"));
-    layout->addWidget(coloringAction->_colorByAction.createWidget(this));
-
     auto stackedWidget = new StackedWidget();
-
-    layout->addWidget(stackedWidget);
 
     stackedWidget->addWidget(coloringAction->_constantColorAction.createWidget(this));
     stackedWidget->addWidget(coloringAction->_colorDimensionAction.createWidget(this));
@@ -175,16 +172,32 @@ ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction, 
 
     switch (state)
     {
-        case Widget::State::Standard:
-            layout->setMargin(0);
-            setLayout(layout);
-            break;
+    case Widget::State::Standard:
+    {
+        auto layout = new QHBoxLayout();
 
-        case Widget::State::Popup:
-            setPopupLayout(layout);
-            break;
+        layout->setMargin(0);
+        layout->addWidget(new QLabel("Color by:"));
+        layout->addWidget(coloringAction->_colorByAction.createWidget(this));
+        layout->addWidget(stackedWidget);
 
-        default:
-            break;
+        setLayout(layout);
+        break;
+    }
+
+    case Widget::State::Popup:
+    {
+        auto layout = new QGridLayout();
+
+        layout->addWidget(new QLabel("Color by:"), 0, 0);
+        layout->addWidget(coloringAction->_colorByAction.createWidget(this), 0, 1);
+        layout->addWidget(stackedWidget, 0, 2);
+
+        setPopupLayout(layout);
+        break;
+    }
+
+    default:
+        break;
     }
 }
