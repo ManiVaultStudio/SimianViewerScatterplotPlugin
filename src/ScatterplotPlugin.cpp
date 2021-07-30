@@ -199,13 +199,6 @@ void ScatterplotPlugin::onDataEvent(DataEvent* dataEvent)
     }
 }
 
-hdps::DataTypes ScatterplotPlugin::supportedDataTypes() const
-{
-    DataTypes supportedTypes;
-    supportedTypes.append(PointType);
-    return supportedTypes;
-}
-
 void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, const QString& name /*= ""*/)
 {
     auto& loadedPoints  = _core->requestData<Points>(_currentDataSet);
@@ -652,4 +645,11 @@ void ScatterplotPlugin::updateWindowTitle()
 ViewPlugin* ScatterplotPluginFactory::produce()
 {
     return new ScatterplotPlugin();
+}
+
+hdps::DataTypes ScatterplotPluginFactory::supportedDataTypes() const
+{
+    DataTypes supportedTypes;
+    supportedTypes.append(PointType);
+    return supportedTypes;
 }
