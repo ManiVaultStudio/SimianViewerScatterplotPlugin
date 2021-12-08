@@ -228,7 +228,7 @@ void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, con
     auto subsetPoints = _positionDataset->getSourceDataset<Points>();
 
     // Create the subset
-    auto& subset = subsetPoints->createSubset(_positionDataset->getGuiName(), _positionDataset);
+    auto subset = subsetPoints->createSubset(_positionDataset->getGuiName(), _positionDataset);
 
     // Notify others that the subset was added
     _core->notifyDataAdded(subset);
@@ -490,7 +490,7 @@ void ScatterplotPlugin::updateSelection()
     if (!_positionDataset.isValid())
         return;
 
-    auto& selection = _positionDataset->getSelection<Points>();
+    auto selection = _positionDataset->getSelection<Points>();
 
     std::vector<bool> selected;
     std::vector<char> highlights;

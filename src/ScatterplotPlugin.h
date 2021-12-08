@@ -39,7 +39,7 @@ public:
      * Load one (or more datasets in the view)
      * @param datasets Dataset(s) to load
      */
-    void loadData(const Datasets& datasets);
+    void loadData(const Datasets& datasets) override;
 
     /** Get number of points in the position dataset */
     std::uint32_t getNumberOfPoints() const;

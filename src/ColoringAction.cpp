@@ -91,7 +91,7 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
             const auto currentColorDatasetTypeIsPointType = currentColorDataset->getDataType() == PointType;
 
             // Update dimension picker points dataset source
-            _dimensionPickerAction.setPointsDataset(currentColorDatasetTypeIsPointType ? currentColorDataset : Dataset<Points>());
+            _dimensionPickerAction.setPointsDataset(currentColorDatasetTypeIsPointType ? Dataset<Points>(currentColorDataset) : Dataset<Points>());
 
             // Hide dimension picker action when not point type
             _dimensionPickerAction.setVisible(currentColorDatasetTypeIsPointType);
