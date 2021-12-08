@@ -15,11 +15,11 @@ PlotAction::PlotAction(ScatterplotPlugin* scatterplotPlugin) :
     setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("paint-brush"));
 
     const auto updateRenderMode = [this]() -> void {
-        _pointPlotAction.setVisible(getScatterplotWidget()->getRenderMode() == ScatterplotWidget::SCATTERPLOT);
-        _densityPlotAction.setVisible(getScatterplotWidget()->getRenderMode() != ScatterplotWidget::SCATTERPLOT);
+        _pointPlotAction.setVisible(getScatterplotWidget().getRenderMode() == ScatterplotWidget::SCATTERPLOT);
+        _densityPlotAction.setVisible(getScatterplotWidget().getRenderMode() != ScatterplotWidget::SCATTERPLOT);
     };
 
-    connect(getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, [this, updateRenderMode](const ScatterplotWidget::RenderMode& renderMode) {
+    connect(&getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, [this, updateRenderMode](const ScatterplotWidget::RenderMode& renderMode) {
         updateRenderMode();
     });
 
@@ -28,7 +28,7 @@ PlotAction::PlotAction(ScatterplotPlugin* scatterplotPlugin) :
 
 QMenu* PlotAction::getContextMenu()
 {
-    switch (getScatterplotWidget()->getRenderMode())
+    switch (getScatterplotWidget().getRenderMode())
     {
         case ScatterplotWidget::RenderMode::SCATTERPLOT:
             return _pointPlotAction.getContextMenu();
@@ -53,8 +53,8 @@ PlotAction::Widget::Widget(QWidget* parent, PlotAction* plotAction, const std::i
     QWidget* densityPlotWidget  = nullptr;
 
     if (widgetFlags & PopupLayout) {
-        pointPlotWidget     = plotAction->_pointPlotAction.createWidget(this);
-        densityPlotWidget   = plotAction->_densityPlotAction.createWidget(this);
+        pointPlotWidget     = plotAction->_pointPlotAction.createWidget(this, WidgetActionWidget::PopupLayout);
+        densityPlotWidget   = plotAction->_densityPlotAction.createWidget(this, WidgetActionWidget::PopupLayout);
 
         auto layout = new QVBoxLayout();
 
@@ -77,13 +77,13 @@ PlotAction::Widget::Widget(QWidget* parent, PlotAction* plotAction, const std::i
     }
 
     const auto updateRenderMode = [plotAction, pointPlotWidget, densityPlotWidget]() -> void {
-        const auto renderMode = plotAction->getScatterplotWidget()->getRenderMode();
+        const auto renderMode = plotAction->getScatterplotWidget().getRenderMode();
 
         pointPlotWidget->setVisible(renderMode == ScatterplotWidget::RenderMode::SCATTERPLOT);
         densityPlotWidget->setVisible(renderMode != ScatterplotWidget::RenderMode::SCATTERPLOT);
     };
 
-    connect(plotAction->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, [this, updateRenderMode](const ScatterplotWidget::RenderMode& renderMode) {
+    connect(&plotAction->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, [this, updateRenderMode](const ScatterplotWidget::RenderMode& renderMode) {
         updateRenderMode();
     });
 

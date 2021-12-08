@@ -2,6 +2,8 @@
 
 #include "PluginAction.h"
 
+#include "ScalarAction.h"
+
 #include <QLabel>
 
 using namespace hdps::gui;
@@ -24,13 +26,43 @@ public:
 
     QMenu* getContextMenu();
 
+    /**
+     * Add point size dataset
+     * @param pointSizeDataset Smart pointer to point size dataset
+     */
+    void addPointSizeDataset(const Dataset<DatasetImpl>& pointSizeDataset);
+
+    /**
+     * Add point opacity dataset
+     * @param pointOpacityDataset Smart pointer to point opacity dataset
+     */
+    void addPointOpacityDataset(const Dataset<DatasetImpl>& pointOpacityDataset);
+
 protected:
-    DecimalAction   _pointSizeAction;
-    DecimalAction   _pointOpacityAction;
 
-    static constexpr double DEFAULT_POINT_SIZE = 10.0;
-    static constexpr double DEFAULT_POINT_OPACITY = 50.0;
+    /** Update default datasets (candidates are children of points type and with matching number of points) */
+    void updateDefaultDatasets();
 
-    friend class Widget;
+    /** Update the scatter plot widget point size scalars */
+    void updateScatterPlotWidgetPointSizeScalars();
+
+    /** Update the scatter plot widget point opacity scalars */
+    void updateScatterPlotWidgetPointOpacityScalars();
+
+    /** Invoked when the focus selection changed */
+    void onFocusSelectionChanged(const bool& focusSelection);
+
+public: // Action getters
+
+    ScalarAction& getSizeAction() { return _sizeAction; }
+    ScalarAction& getOpacityAction() { return _opacityAction; }
+
+protected:
+    ScalarAction    _sizeAction;        /** Point size action */
+    ScalarAction    _opacityAction;     /** Point opacity action */
+
+    static constexpr double DEFAULT_POINT_SIZE      = 10.0;     /** Default point size */
+    static constexpr double DEFAULT_POINT_OPACITY   = 50.0;     /** Default point opacity */
+
     friend class PlotAction;
 };

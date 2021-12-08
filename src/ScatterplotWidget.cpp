@@ -46,7 +46,7 @@ ScatterplotWidget::ScatterplotWidget() :
     // Configure pixel selection tool
     _pixelSelectionTool.setEnabled(true);
     _pixelSelectionTool.setMainColor(QColor(Qt::black));
-
+    
     QObject::connect(&_pixelSelectionTool, &PixelSelectionTool::shapeChanged, [this]() {
         if (isInitialized())
             update();
@@ -223,16 +223,17 @@ void ScatterplotWidget::setColors(const std::vector<Vector3f>& colors)
     update();
 }
 
-void ScatterplotWidget::setPointSize(const float& pointSize)
+void ScatterplotWidget::setPointSizeScalars(const std::vector<float>& pointSizeScalars)
 {
-    _pointRenderer.setPointSize(pointSize);
+    _pointRenderer.setSizeChannelScalars(pointSizeScalars);
+    _pointRenderer.setPointSize(*std::max_element(pointSizeScalars.begin(), pointSizeScalars.end()));
 
     update();
 }
 
-void ScatterplotWidget::setAlpha(const float alpha)
+void ScatterplotWidget::setPointOpacityScalars(const std::vector<float>& pointOpacityScalars)
 {
-    _pointRenderer.setAlpha(alpha);
+    _pointRenderer.setOpacityChannelScalars(pointOpacityScalars);
 
     update();
 }
@@ -245,6 +246,8 @@ void ScatterplotWidget::setPointScaling(hdps::gui::PointScaling scalingMode)
 void ScatterplotWidget::setScalarEffect(PointEffect effect)
 {
     _pointRenderer.setScalarEffect(effect);
+
+    update();
 }
 
 void ScatterplotWidget::setSigma(const float sigma)
@@ -311,16 +314,18 @@ void ScatterplotWidget::initializeGL()
 
     connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScatterplotWidget::cleanup);
 
+    // Initialize renderers
     _pointRenderer.init();
     _densityRenderer.init();
 
     // Set a default color map for both renderers
     _pointRenderer.setScalarEffect(PointEffect::Color);
 
+    // OpenGL is initialized
+    _isInitialized = true;
+
     // Initialize the point and density renderer with a color map
     setColorMap(_colorMapImage);
-
-    _isInitialized = true;
 
     emit initialized();
 }
@@ -415,16 +420,20 @@ void ScatterplotWidget::cleanup()
 
 void ScatterplotWidget::setColorMap(const QImage& colorMapImage)
 {
-    makeCurrent();
-
     _colorMapImage = colorMapImage;
 
-    //if (!_isInitialized)
-        //return;
+    // Do not update color maps of the renderers when OpenGL is not initialized
+    if (!_isInitialized)
+        return;
 
+    // Activate OpenGL context
+    makeCurrent();
+
+    // Apply color maps to renderers
     _pointRenderer.setColormap(_colorMapImage);
     _densityRenderer.setColormap(_colorMapImage);
 
+    // Render
     update();
 }
 

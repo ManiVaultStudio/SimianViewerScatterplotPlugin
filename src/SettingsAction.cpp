@@ -11,21 +11,19 @@ using namespace hdps::gui;
 SettingsAction::SettingsAction(ScatterplotPlugin* scatterplotPlugin) :
     PluginAction(scatterplotPlugin, "Settings"),
     _renderModeAction(scatterplotPlugin),
-    _plotAction(scatterplotPlugin),
     _positionAction(scatterplotPlugin),
     _coloringAction(scatterplotPlugin),
     _subsetAction(scatterplotPlugin),
     _manualClusteringAction(scatterplotPlugin),
     _selectionAction(*scatterplotPlugin),
+    _plotAction(scatterplotPlugin),
     _miscellaneousAction(scatterplotPlugin)
 {
     const auto updateEnabled = [this]() {
-        setEnabled(_scatterplotPlugin->getPointsDataset().isValid());
+        setEnabled(_scatterplotPlugin->getPositionDataset().isValid());
     };
 
-    connect(&scatterplotPlugin->getPointsDataset(), &DatasetRef<Points>::datasetNameChanged, this, [this, updateEnabled](const QString& oldDatasetName, const QString& newDatasetName) {
-        updateEnabled();
-    });
+    connect(&scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, updateEnabled);
 
     updateEnabled();
 }
@@ -85,21 +83,6 @@ SettingsAction::Widget::Widget(QWidget* parent, SettingsAction* settingsAction) 
 
     this->installEventFilter(this);
     _toolBarWidget.installEventFilter(this);
-
-    const auto onCurrentDatasetChanged = [this, settingsAction](const QString& datasetName = "") -> void {
-        auto positionPriority = 10;
-
-        if (!datasetName.isEmpty() && settingsAction->_scatterplotPlugin->getCore()->requestData<Points>(datasetName).getNumDimensions() == 2)
-            positionPriority = 1;
-
-        _stateWidgets[2]->setPriority(positionPriority);
-    };
-
-    connect(&settingsAction->_scatterplotPlugin->getPointsDataset(), &DatasetRef<Points>::datasetNameChanged, this, [this, onCurrentDatasetChanged](const QString& oldDatasetName, const QString& newDatasetName) {
-        onCurrentDatasetChanged(newDatasetName);
-    });
-
-    onCurrentDatasetChanged();
 }
 
 bool SettingsAction::Widget::eventFilter(QObject* object, QEvent* event)

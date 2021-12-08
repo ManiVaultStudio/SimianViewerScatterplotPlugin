@@ -2,7 +2,6 @@
 
 #include <ViewPlugin.h>
 
-#include "util/DatasetRef.h"
 #include "util/PixelSelectionTool.h"
 
 #include "Common.h"
@@ -36,7 +35,16 @@ public:
 
     void init() override;
 
+    /**
+     * Load one (or more datasets in the view)
+     * @param datasets Dataset(s) to load
+     */
+    void loadData(const Datasets& datasets);
+
+    /** Get number of points in the position dataset */
     std::uint32_t getNumberOfPoints() const;
+
+    /** Get number of selected points in the position dataset */
     std::uint32_t getNumberOfSelectedPoints() const;
 
 public:
@@ -45,7 +53,6 @@ public:
 public: // Dimension picking
     void setXDimension(const std::int32_t& dimensionIndex);
     void setYDimension(const std::int32_t& dimensionIndex);
-    void setColorDimension(const std::int32_t& dimensionIndex);
 
 public: // Selection
     bool canSelect() const;
@@ -58,50 +65,57 @@ public: // Selection
 
 protected: // Data loading
 
-    /**
-     * Load point data
-     * @param dataSetName Name of the point dataset
-     */
-    void loadPoints(const QString& dataSetName);
+    /** Invoked when the position points dataset changes */
+    void positionDatasetChanged();
+
+public: // Point colors
 
     /**
-     * Load color data
-     * @param dataSetName Name of the color/cluster dataset
+     * Load color from points dataset
+     * @param points Smart pointer to points dataset
+     * @param dimensionIndex Index of the dimension to load
      */
-    void loadColors(const QString& dataSetName);
+    void loadColors(const Dataset<Points>& points, const std::uint32_t& dimensionIndex);
+
+    /**
+     * Load color from clusters dataset
+     * @param clusters Smart pointer to clusters dataset
+     */
+    void loadColors(const Dataset<Clusters>& clusters);
 
 public: // Miscellaneous
 
-    /** Get current points dataset */
-    DatasetRef<Points>& getPointsDataset();
+    /** Get smart pointer to points dataset for point position */
+    Dataset<Points>& getPositionDataset();
 
-    /** Get current color dataset */
-    DatasetRef<DataSet>& getColorsDataset();
+    /** Get smart pointer to source of the points dataset for point position (if any) */
+    Dataset<Points>& getPositionSourceDataset();
 
-    /** Get cluster dataset names for the loaded points dataset */
-    QStringList getClusterDatasetNames();
-
+    /** Use the pixel selection tool to select data points */
     void selectPoints();
 
-signals:
-    void selectionChanged();
+protected:
+
+    /** Updates the window title (displays the name of the view and the GUI name of the loaded points dataset) */
+    void updateWindowTitle();
 
 public:
-    ScatterplotWidget* getScatterplotWidget();
-    hdps::CoreInterface* getCore();
+
+    /** Get reference to the scatter plot widget */
+    ScatterplotWidget& getScatterplotWidget();
 
     SettingsAction& getSettingsAction() { return _settingsAction; }
+
 private:
     void updateData();
     void calculatePositions(const Points& points);
-    void calculateScalars(std::vector<float>& scalars, const Points& points, int colorIndex);
     void updateSelection();
 
 private:
-    DatasetRef<Points>              _points;        /** Currently loaded points dataset */
-    DatasetRef<DataSet>             _colors;        /** Currently loaded color dataset (if any) */
-    std::vector<hdps::Vector2f>     _positions;     /** Point positions */
-    unsigned int                    _numPoints;     /** Number of point positions */
+    Dataset<Points>                 _positionDataset;           /** Smart pointer to points dataset for point position */
+    Dataset<Points>                 _positionSourceDataset;     /** Smart pointer to source of the points dataset for point position (if any) */
+    std::vector<hdps::Vector2f>     _positions;                 /** Point positions */
+    unsigned int                    _numPoints;                 /** Number of point positions */
     
     
 protected:

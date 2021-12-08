@@ -33,9 +33,8 @@ public:
 
     /** The way that point colors are determined */
     enum class ColoringMode {
-        ConstantColor,      /** Point color is a constant color */
-        ColorDimension,          /** Data dimension drives the color */
-        ColorData           /** Determined by external color dataset */
+        Constant,      /** Point color is a constant color */
+        Data                /** Determined by external dataset */
     };
 
 public:
@@ -74,12 +73,18 @@ public:
     void setColors(const std::vector<Vector3f>& colors);
 
     /**
-     * Set point size in pixels
-     * @param pointSize Point size in pixels
+     * Set point size scalars
+     * @param pointSizeScalars Point size scalars
      */
-    void setPointSize(const float& pointSize);
+    void setPointSizeScalars(const std::vector<float>& pointSizeScalars);
+
+    /**
+     * Set point opacity scalars
+     * @param pointOpacityScalars Point opacity scalars (assume the values are normalized)
+     */
+    void setPointOpacityScalars(const std::vector<float>& pointOpacityScalars);
+
     void setScalarEffect(PointEffect effect);
-    void setAlpha(const float alpha);
     void setPointScaling(hdps::gui::PointScaling scalingMode);
     void setSigma(const float sigma);
     void setFocusSelection(const bool& focusSelection);
@@ -143,7 +148,7 @@ private:
     bool                    _isInitialized = false;
     RenderMode              _renderMode = SCATTERPLOT;
     QColor                  _backgroundColor;
-    ColoringMode            _coloringMode = ColoringMode::ConstantColor;
+    ColoringMode            _coloringMode = ColoringMode::Constant;
     PointRenderer           _pointRenderer;                     
     DensityRenderer         _densityRenderer;                   
     QSize                   _windowSize;                        /** Size of the scatterplot widget */

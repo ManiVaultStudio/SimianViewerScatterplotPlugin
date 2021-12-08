@@ -22,36 +22,34 @@ SubsetAction::SubsetAction(ScatterplotPlugin* scatterplotPlugin) :
         setEnabled(_scatterplotPlugin->getNumberOfSelectedPoints() >= 1);
     };
 
-    connect(_scatterplotPlugin, &ScatterplotPlugin::selectionChanged, this, updateActions);
+    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, updateActions);
 
     connect(&_createSubsetAction, &QAction::triggered, this, [this]() {
         _scatterplotPlugin->createSubset(_sourceDataAction.getCurrentIndex() == 1, _subsetNameAction.getString());
     });
 
     const auto onCurrentDatasetChanged = [this]() -> void {
-        if (!_scatterplotPlugin->getPointsDataset().isValid())
+        if (!_scatterplotPlugin->getPositionDataset().isValid())
             return;
 
-        const auto datasetName = _scatterplotPlugin->getPointsDataset()->getName();
+        const auto datasetGuiName = _scatterplotPlugin->getPositionDataset()->getGuiName();
 
         QStringList sourceDataOptions;
 
-        if (!datasetName.isEmpty()) {
-            const auto sourceDatasetName = DataSet::getSourceData(_scatterplotPlugin->getCore()->requestData<Points>(datasetName)).getName();
+        if (!datasetGuiName.isEmpty()) {
+            const auto sourceDatasetGuiName = _scatterplotPlugin->getPositionDataset()->getSourceDataset<Points>()->getGuiName();
 
-            sourceDataOptions << QString("From: %1").arg(datasetName);
+            sourceDataOptions << QString("From: %1").arg(datasetGuiName);
 
-            if (sourceDatasetName != datasetName)
-                sourceDataOptions << QString("From: %1 (source data)").arg(sourceDatasetName);
+            if (sourceDatasetGuiName != datasetGuiName)
+                sourceDataOptions << QString("From: %1 (source data)").arg(sourceDatasetGuiName);
         }
 
         _sourceDataAction.setOptions(sourceDataOptions);
         _sourceDataAction.setEnabled(sourceDataOptions.count() >= 2);
     };
 
-    connect(&scatterplotPlugin->getPointsDataset(), &DatasetRef<Points>::datasetNameChanged, this, [this, onCurrentDatasetChanged](const QString& oldDatasetName, const QString& newDatasetName) {
-        onCurrentDatasetChanged();
-    });
+    connect(&scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, onCurrentDatasetChanged);
 
     onCurrentDatasetChanged();
     updateActions();

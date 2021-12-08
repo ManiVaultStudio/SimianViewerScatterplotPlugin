@@ -33,8 +33,8 @@ using namespace hdps::util;
 
 ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _points(),
-    _colors(),
+    _positionDataset(),
+    _positionSourceDataset(),
     _positions(),
     _numPoints(0),
     _scatterPlotWidget(new ScatterplotWidget()),
@@ -47,14 +47,14 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     setFocusPolicy(Qt::ClickFocus);
 
     connect(_scatterPlotWidget, &ScatterplotWidget::customContextMenuRequested, this, [this](const QPoint& point) {
-        if (!_points.isValid())
+        if (!_positionDataset.isValid())
             return;
 
         auto contextMenu = _settingsAction.getContextMenu();
         
         contextMenu->addSeparator();
 
-        _points->populateContextMenu(contextMenu);
+        _positionDataset->populateContextMenu(contextMenu);
 
         contextMenu->exec(mapToGlobal(point));
     });
@@ -69,68 +69,92 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
         if (tokens.count() == 1)
             return dropRegions;
 
-        const auto datasetName          = tokens[0];
-        const auto dataType             = DataType(tokens[1]);
+        const auto datasetGuiName       = tokens[0];
+        const auto datasetId            = tokens[1];
+        const auto dataType             = DataType(tokens[2]);
         const auto dataTypes            = DataTypes({ PointType , ColorType, ClusterType });
-        const auto currentDatasetName   = _points.getDatasetName();
 
+        // Check if the data type can be dropped
         if (!dataTypes.contains(dataType))
-            dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", false);
+            dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
 
+        // Points dataset is about to be dropped
         if (dataType == PointType) {
-            const auto candidateDataset     = getCore()->requestData<Points>(datasetName);
-            const auto candidateDatasetName = candidateDataset.getName();
-            const auto description          = QString("Visualize %1 as points or density/contour map").arg(candidateDatasetName);
 
-            if (!_points.isValid()) {
-                dropRegions << new DropWidget::DropRegion(this, "Position", description, true, [this, candidateDatasetName]() {
-                    _points.setDatasetName(candidateDatasetName);
+            // Get points dataset from the core
+            auto candidateDataset = _core->requestDataset<Points>(datasetId);
+
+            // Establish drop region description
+            const auto description = QString("Visualize %1 as points or density/contour map").arg(datasetGuiName);
+
+            if (!_positionDataset.isValid()) {
+
+                // Load as point positions when no dataset is currently loaded
+                dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]() {
+                    _positionDataset = candidateDataset;
                 });
             }
             else {
-                if (candidateDatasetName == currentDatasetName) {
-                    dropRegions << new DropWidget::DropRegion(this, "Warning", "Data already loaded", false);
-                }
-                else {
-                    const auto points = getCore()->requestData<Points>(currentDatasetName);
+                if (_positionDataset != candidateDataset) {
 
-                    if (points.getNumPoints() != candidateDataset.getNumPoints()) {
-                        dropRegions << new DropWidget::DropRegion(this, "Position", description, true, [this, candidateDatasetName]() {
-                            _points.setDatasetName(candidateDatasetName);
-                        });
-                    }
-                    else {
-                        dropRegions << new DropWidget::DropRegion(this, "Position", description, true, [this, candidateDatasetName]() {
-                            _points.setDatasetName(candidateDatasetName);
-                        });
-
-                        if (candidateDatasetName != _colors.getDatasetName()) {
-                            dropRegions << new DropWidget::DropRegion(this, "Color", QString("Color %1 by %2").arg(currentDatasetName, candidateDatasetName), true, [this, candidateDatasetName]() {
-                                _colors.setDatasetName(candidateDatasetName);
-                            });
-                        }
-                    }
+                    // The number of points is equal, so offer the option to replace the existing points dataset
+                    dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]() {
+                        _positionDataset = candidateDataset;
+                    });
                 }
+
+                // The number of points is equal, so offer the option to use the points dataset as source for points colors
+                dropRegions << new DropWidget::DropRegion(this, "Point color", QString("Colorize %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "palette", true, [this, candidateDataset]() {
+                    _settingsAction.getColoringAction().addColorDataset(candidateDataset);
+                    _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
+                });
+
+                // The number of points is equal, so offer the option to use the points dataset as source for points size
+                dropRegions << new DropWidget::DropRegion(this, "Point size", QString("Size %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "ruler-horizontal", true, [this, candidateDataset]() {
+                    _settingsAction.getPlotAction().getPointPlotAction().addPointSizeDataset(candidateDataset);
+                    _settingsAction.getPlotAction().getPointPlotAction().getSizeAction().setCurrentDataset(candidateDataset);
+                });
+
+                // The number of points is equal, so offer the option to use the points dataset as source for points opacity
+                dropRegions << new DropWidget::DropRegion(this, "Point opacity", QString("Set %1 points opacity with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "brush", true, [this, candidateDataset]() {
+                    _settingsAction.getPlotAction().getPointPlotAction().addPointOpacityDataset(candidateDataset);
+                    _settingsAction.getPlotAction().getPointPlotAction().getOpacityAction().setCurrentDataset(candidateDataset);
+                });
             }
         }
 
+        // Cluster dataset is about to be dropped
         if (dataType == ClusterType) {
-            const auto candidateDataset     = getCore()->requestData<Clusters>(datasetName);
-            const auto candidateDatasetName = candidateDataset.getName();
-            const auto description          = QString("Color points by %1").arg(candidateDatasetName);
 
-            if (_points.isValid()) {
-                if (candidateDatasetName == _colors.getDatasetName()) {
-                    dropRegions << new DropWidget::DropRegion(this, "Color", "Cluster set is already in use", false, [this]() {});
+            // Get clusters dataset from the core
+            auto candidateDataset  = _core->requestDataset<Clusters>(datasetId);
+            
+            // Establish drop region description
+            const auto description  = QString("Color points by %1").arg(candidateDataset->getGuiName());
+
+            // Only allow user to color by clusters when there is a positions dataset loaded
+            if (_positionDataset.isValid()) {
+
+                if (_settingsAction.getColoringAction().hasColorDataset(candidateDataset)) {
+
+                    // The clusters dataset is already loaded
+                    dropRegions << new DropWidget::DropRegion(this, "Color", description, "palette", true, [this, candidateDataset]() {
+                        _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
+                    });
                 }
                 else {
-                    dropRegions << new DropWidget::DropRegion(this, "Color", description, true, [this, candidateDatasetName]() {
-                        _colors.setDatasetName(candidateDatasetName);
+
+                    // Use the clusters set for points color
+                    dropRegions << new DropWidget::DropRegion(this, "Color", description, "palette", true, [this, candidateDataset]() {
+                        _settingsAction.getColoringAction().addColorDataset(candidateDataset);
+                        _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
                     });
                 }
             }
             else {
-                dropRegions << new DropWidget::DropRegion(this, "No points data loaded", "Clusters can only be visualized in concert with points data", false);
+
+                // Only allow user to color by clusters when there is a positions dataset loaded
+                dropRegions << new DropWidget::DropRegion(this, "No points data loaded", "Clusters can only be visualized in concert with points data", "exclamation-circle", false);
             }
         }
 
@@ -153,73 +177,16 @@ void ScatterplotPlugin::init()
 
     setLayout(layout);
 
+    // Update the data when the scatter plot widget is initialized
     connect(_scatterPlotWidget, &ScatterplotWidget::initialized, this, &ScatterplotPlugin::updateData);
 
-    // Register for points dataset events
-    registerDataEventByType(PointType, [this](DataEvent* dataEvent) {
-        if (!_points.isValid())
-            return;
-
-        switch (dataEvent->getType())
-        {
-            case EventType::DataChanged:
-            {
-                if (dataEvent->dataSetName != _points.getDatasetName())
-                    return;
-
-                updateData();
-
-                break;
-            }
-
-            case EventType::SelectionChanged:
-            {
-                if (!_points.isValid())
-                    return;
-
-                if (dataEvent->dataSetName == _points.getDatasetName())
-                    updateSelection();
-
-                break;
-            }
-
-            default:
-                break;
-        }
-    });
-
-    // Register for cluster dataset events
-    registerDataEventByType(ClusterType, [this](hdps::DataEvent* dataEvent) {
-        if (!_colors.isValid())
-            return;
-
-        if (dataEvent->dataSetName != _colors.getDatasetName())
-            return;
-
-        switch (dataEvent->getType())
-        {
-            case EventType::DataChanged:
-            {
-                if (dataEvent->dataSetName != _colors.getDatasetName())
-                    return;
-
-                loadColors(_colors.getDatasetName());
-
-                break;
-            }
-
-            default:
-                break;
-        }
-    });
-
+    // Update the selection when the pixel selection tool selected area changed
     connect(&_scatterPlotWidget->getPixelSelectionTool(), &PixelSelectionTool::areaChanged, [this]() {
-        if (!_scatterPlotWidget->getPixelSelectionTool().isNotifyDuringSelection())
-            return;
-
-        selectPoints();
+        if (_scatterPlotWidget->getPixelSelectionTool().isNotifyDuringSelection())
+            selectPoints();
     });
 
+    // Update the selection when the pixel selection process ended
     connect(&_scatterPlotWidget->getPixelSelectionTool(), &PixelSelectionTool::ended, [this]() {
         if (_scatterPlotWidget->getPixelSelectionTool().isNotifyDuringSelection())
             return;
@@ -227,82 +194,88 @@ void ScatterplotPlugin::init()
         selectPoints();
     });
 
-    connect(&_settingsAction.getColoringAction().getColorByAction(), &OptionAction::currentTextChanged, [this](const QString& currentText) {
-        if (currentText != "Color data")
-            return;
+    // Load points when the pointer to the position dataset changes
+    connect(&_positionDataset, &Dataset<Points>::changed, this, &ScatterplotPlugin::positionDatasetChanged);
 
-        loadColors(_colors.getDatasetName());
-    });
+    // Update points when the position dataset data changes
+    connect(&_positionDataset, &Dataset<Points>::dataChanged, this, &ScatterplotPlugin::updateData);
 
-    const auto updateWindowTitle = [this]() -> void {
-        if (!_points.isValid())
-            setWindowTitle(getGuiName());
-        else
-            setWindowTitle(QString("%1: %2").arg(getGuiName(), _points.getDatasetName()));
-    };
+    // Update point selection when the position dataset data changes
+    connect(&_positionDataset, &Dataset<Points>::dataSelectionChanged, this, &ScatterplotPlugin::updateSelection);
 
-    // Load points when the dataset name of the points dataset reference changes
-    connect(&_points, &DatasetRef<Points>::datasetNameChanged, this, [this, updateWindowTitle](const QString& oldDatasetName, const QString& newDatasetName) {
-        loadPoints(newDatasetName);
-        updateWindowTitle();
-    });
+    // Update the window title when the GUI name of the position dataset changes
+    connect(&_positionDataset, &Dataset<Points>::dataGuiNameChanged, this, &ScatterplotPlugin::updateWindowTitle);
 
-    // Load color data when the dataset name of the colors dataset reference changes
-    connect(&_colors, &DatasetRef<Colors>::datasetNameChanged, this, [this](const QString& oldDatasetName, const QString& newDatasetName) {
-        loadColors(newDatasetName);
-    });
-
+    // Do an initial update of the window title
     updateWindowTitle();
+}
+
+void ScatterplotPlugin::loadData(const Datasets& datasets)
+{
+    // Exit if there is nothing to load
+    if (datasets.isEmpty())
+        return;
+
+    // Load the first dataset
+    _positionDataset = datasets.first();
+
+    // And set the coloring mode to constant
+    _settingsAction.getColoringAction().getColorByAction().setCurrentIndex(0);
 }
 
 void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, const QString& name /*= ""*/)
 {
-    auto& subsetPoints  = _points->isDerivedData() && fromSourceData ? DataSet::getSourceData(*_points) : *_points;
+    auto subsetPoints = _positionDataset->getSourceDataset<Points>();
 
-    const auto subsetName = subsetPoints.createSubset(_points->getName());
+    // Create the subset
+    auto& subset = subsetPoints->createSubset(_positionDataset->getGuiName(), _positionDataset);
 
-    _core->notifyDataAdded(subsetName);
-    _core->getDataHierarchyItem(subsetName)->select();
+    // Notify others that the subset was added
+    _core->notifyDataAdded(subset);
+    
+    // And select the subset
+    subset->getDataHierarchyItem().select();
 }
 
 void ScatterplotPlugin::selectPoints()
 {
-    if (!_points.isValid() || !_scatterPlotWidget->getPixelSelectionTool().isActive())
+    // Only proceed with a valid points position datset and when the pixel selection tool is active
+    if (!_positionDataset.isValid() || !_scatterPlotWidget->getPixelSelectionTool().isActive())
         return;
 
+    // Get binary selection area image from the pixel selection tool
     auto selectionAreaImage = _scatterPlotWidget->getPixelSelectionTool().getAreaPixmap().toImage();
 
+    // Get smart pointer to the position selection dataset
+    auto selectionSet = _positionDataset->getSelection<Points>();
 
-    Points& selectionSet = static_cast<Points&>(_points->getSelection());
+    // Create vector for target selection indices
+    std::vector<std::uint32_t> targetSelectionIndices;
 
-    std::vector<std::uint32_t> targetIndices;
+    // Reserve space for the indices
+    targetSelectionIndices.reserve(_positionDataset->getNumPoints());
 
-    targetIndices.reserve(_points->getNumPoints());
-    std::vector<unsigned int> localGlobalIndices;
-    
-    _points->getGlobalIndices(localGlobalIndices);
+    // Mapping from local to global indices
+    std::vector<std::uint32_t> localGlobalIndices;
+
+    // Get global indices from the position dataset
+    _positionDataset->getGlobalIndices(localGlobalIndices);
 
     const auto dataBounds   = _scatterPlotWidget->getBounds();
     const auto width        = selectionAreaImage.width();
     const auto height       = selectionAreaImage.height();
     const auto size         = width < height ? width : height;
-    const auto& set         = _points->isDerivedData() ? DataSet::getSourceData(*_points) : *_points;
-    const auto& setIndices  = set.indices;
 
-    std::vector<unsigned int> localIndices;
-    for (unsigned int i = 0; i < _positions.size(); i++) {
+    // Loop over all points and establish whether they are selected or not
+    for (std::uint32_t i = 0; i < _positions.size(); i++) {
         const auto uvNormalized     = QPointF((_positions[i].x - dataBounds.getLeft()) / dataBounds.getWidth(), (dataBounds.getTop() - _positions[i].y) / dataBounds.getHeight());
         const auto uvOffset         = QPoint((selectionAreaImage.width() - size) / 2.0f, (selectionAreaImage.height() - size) / 2.0f);
         const auto uv               = uvOffset + QPoint(uvNormalized.x() * size, uvNormalized.y() * size);
 
-        if (selectionAreaImage.pixelColor(uv).alpha() > 0) {
-            int globalIndex = localGlobalIndices[i];
-            targetIndices.push_back(globalIndex);
-            localIndices.push_back(i); // FIXME Find more performant way to add this
-        }
+        // Add point if the corresponding pixel selection is on
+        if (selectionAreaImage.pixelColor(uv).alpha() > 0)
+            targetSelectionIndices.push_back(localGlobalIndices[i]);
     }
-    
-    auto& selectionSetIndices = selectionSet.indices;
 
     switch (_scatterPlotWidget->getPixelSelectionTool().getModifier())
     {
@@ -312,21 +285,29 @@ void ScatterplotPlugin::selectPoints()
         case PixelSelectionModifierType::Add:
         case PixelSelectionModifierType::Remove:
         {
+            // Get reference to the indices of the selection set
+            auto& selectionSetIndices = selectionSet->indices;
+
+            // Create a set from the selection set indices
             QSet<std::uint32_t> set(selectionSetIndices.begin(), selectionSetIndices.end());
 
             switch (_scatterPlotWidget->getPixelSelectionTool().getModifier())
             {
+                // Add points to the current selection
                 case PixelSelectionModifierType::Add:
                 {
-                    for (const auto& targetIndex : targetIndices)
+                    // Add indices to the set 
+                    for (const auto& targetIndex : targetSelectionIndices)
                         set.insert(targetIndex);
 
                     break;
                 }
 
+                // Remove points from the current selection
                 case PixelSelectionModifierType::Remove:
                 {
-                    for (const auto& targetIndex : targetIndices)
+                    // Remove indices from the set 
+                    for (const auto& targetIndex : targetSelectionIndices)
                         set.remove(targetIndex);
 
                     break;
@@ -336,7 +317,8 @@ void ScatterplotPlugin::selectPoints()
                     break;
             }
 
-            targetIndices = std::vector<std::uint32_t>(set.begin(), set.end());
+            // Convert set back to vector
+            targetSelectionIndices = std::vector<std::uint32_t>(set.begin(), set.end());
 
             break;
         }
@@ -345,157 +327,123 @@ void ScatterplotPlugin::selectPoints()
             break;
     }
 
-    _points->setSelection(targetIndices);
+    // Apply the selection
+    _positionDataset->setSelection(targetSelectionIndices);
 
-    _core->notifySelectionChanged(_points->getName());
+    // Notify others that the selection changed
+    _core->notifyDataSelectionChanged(_positionDataset);
 }
 
-DatasetRef<Points>& ScatterplotPlugin::getPointsDataset()
+void ScatterplotPlugin::updateWindowTitle()
 {
-    return _points;
+    if (!_positionDataset.isValid())
+        setWindowTitle(getGuiName());
+    else
+        setWindowTitle(QString("%1: %2").arg(getGuiName(), _positionDataset->getDataHierarchyItem().getFullPathName()));
 }
 
-DatasetRef<DataSet>& ScatterplotPlugin::getColorsDataset()
+Dataset<Points>& ScatterplotPlugin::getPositionDataset()
 {
-    return _colors;
+    return _positionDataset;
 }
 
-QStringList ScatterplotPlugin::getClusterDatasetNames()
+Dataset<Points>& ScatterplotPlugin::getPositionSourceDataset()
 {
-    QStringList clusterDatasetNames;
-
-    if (!_points.isValid())
-        return clusterDatasetNames;
-
-    auto pointsDataHierarchyItem = _core->getDataHierarchyItem(_points.getDatasetName());
-
-    if (pointsDataHierarchyItem == nullptr)
-        return clusterDatasetNames;
-
-    for (auto child : pointsDataHierarchyItem->getChildren()) {
-        if (child->getDataType() == ClusterType)
-            clusterDatasetNames << child->getDatasetName();
-    }
-
-    return clusterDatasetNames;
+    return _positionSourceDataset;
 }
 
-void ScatterplotPlugin::loadPoints(const QString& dataSetName)
+void ScatterplotPlugin::positionDatasetChanged()
 {
-    _colors.reset();
+    // Only proceed if we have a valid position dataset
+    if (!_positionDataset.isValid())
+        return;
 
-    if (_points.isValid()) {
-        _settingsAction.getColoringAction().getColorMapAction().reset();
+    // Reset dataset references
+    _positionSourceDataset.reset();
 
-        // For source data determine whether to use dimension names or make them up
-        if (_points->getDimensionNames().size() == _points->getNumDimensions())
-            _settingsAction.getPositionAction().setDimensions(_points->getDimensionNames());
-        else
-            _settingsAction.getPositionAction().setDimensions(_points->getNumDimensions());
+    // Set position source dataset reference when the position dataset is derived
+    if (_positionDataset->isDerivedData())
+        _positionSourceDataset = _positionDataset->getSourceDataset<Points>();
 
-        // For derived data determine whether to use dimension names or make them up
-        if (DataSet::getSourceData(*_points).getDimensionNames().size() == DataSet::getSourceData(*_points).getNumDimensions())
-            _settingsAction.getColoringAction().setDimensions(DataSet::getSourceData(*_points).getDimensionNames());
-        else
-            _settingsAction.getColoringAction().setDimensions(DataSet::getSourceData(*_points).getNumDimensions());
+    // Enable pixel selection if the point positions dataset is valid
+    _scatterPlotWidget->getPixelSelectionTool().setEnabled(_positionDataset.isValid());
+    
+    // Do not show the drop indicator if there is a valid point positions dataset
+    _dropWidget->setShowDropIndicator(!_positionDataset.isValid());
 
-        _scatterPlotWidget->getPixelSelectionTool().setEnabled(_points.isValid());
-
-        _dropWidget->setShowDropIndicator(false);
-
-        setFocus();
-    }
-    else {
-        _settingsAction.getPositionAction().setDimensions(std::vector<QString>());
-        _settingsAction.getColoringAction().setDimensions(std::vector<QString>());
-
-        _dropWidget->setShowDropIndicator(true);
-    }
-
-    _scatterPlotWidget->setColoringMode(ScatterplotWidget::ColoringMode::ConstantColor);
-
+    // Update positions data
     updateData();
+
+    // Update the window title to reflect the position dataset change
+    updateWindowTitle();
 }
 
-void ScatterplotPlugin::loadColors(const QString& dataSetName)
+void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uint32_t& dimensionIndex)
 {
-    _settingsAction.getColoringAction().getColorDataAction().getDatasetNameAction().setString(_colors.getDatasetName());
+    // Only proceed with valid points dataset
+    if (!points.isValid())
+        return;
 
-    if (_colors.isValid()) {
-        const auto dataType = _colors->getDataType();
+    // Generate point scalars for color mapping
+    std::vector<float> scalars;
 
-        if (dataType == PointType)
+    if (_positionDataset->getNumPoints() != _numPoints)
+    {
+        qWarning("Number of points used for coloring does not match number of points in data, aborting attempt to color plot");
+        return;
+    }
+
+    // Populate point scalars
+    if (dimensionIndex >= 0)
+        points->extractDataForDimension(scalars, dimensionIndex);
+
+    // Assign scalars and scalar effect
+    _scatterPlotWidget->setScalars(scalars);
+    _scatterPlotWidget->setScalarEffect(PointEffect::Color);
+
+    // Render
+    update();
+}
+
+void ScatterplotPlugin::loadColors(const Dataset<Clusters>& clusters)
+{
+    // Only proceed with valid clusters dataset
+    if (!clusters.isValid())
+        return;
+
+    // Generate colors buffer
+    std::vector<Vector3f> colors(_positions.size());
+
+    // Loop over all clusters
+    for (const auto& cluster : clusters->getClusters())
+    {
+        // Get cluster color
+        const auto clusterColor = cluster.getColor();
+
+        // Loop over all indices in the cluster
+        for (const auto& index : cluster.getIndices())
         {
-            std::vector<float> scalars;
-
-            if (_points->getNumPoints() != _numPoints)
+            if (index < 0 || index > colors.size())
             {
-                qWarning("Number of points used for coloring does not match number of points in data, aborting attempt to color plot");
+                qWarning("Cluster index is out of range of data, aborting attempt to color plot");
                 return;
             }
 
-            _points->visitFromBeginToEnd([&scalars](auto begin, auto end) {
-                scalars.insert(scalars.begin(), begin, end);
-            });
-
-            _scatterPlotWidget->setScalars(scalars);
-            _scatterPlotWidget->setScalarEffect(PointEffect::Color);
+            // Assign point color
+            colors[index] = Vector3f(clusterColor.redF(), clusterColor.greenF(), clusterColor.blueF());
         }
-
-        if (dataType == ClusterType)
-        {
-            auto& clusters = static_cast<Clusters&>(*_colors);
-
-            std::vector<Vector3f> colors(_positions.size());
-
-            for (const Cluster& cluster : clusters.getClusters())
-            {
-                for (const int& index : cluster.getIndices())
-                {
-                    if (index < 0 || index > colors.size())
-                    {
-                        qWarning("Cluster index is out of range of data, aborting attempt to color plot");
-                        return;
-                    }
-
-                    const auto clusterColor = cluster.getColor();
-
-                    colors[index] = Vector3f(clusterColor.redF(), clusterColor.greenF(), clusterColor.blueF());
-                }
-            }
-
-            _scatterPlotWidget->setColors(colors);
-
-            updateData();
-        }
-
-        _scatterPlotWidget->setColoringMode(ScatterplotWidget::ColoringMode::ColorData);
-        _settingsAction.getColoringAction().getColorDataAction().getDatasetNameAction().setString(dataSetName);
-
-        _dropWidget->setShowDropIndicator(false);
-    }
-    else {
-        std::vector<float> scalars;
-
-        if (_points.isValid()) {
-            scalars.resize(_points->getNumPoints());
-        }
-        
-        _scatterPlotWidget->setScalars(scalars);
-        _scatterPlotWidget->setScalarEffect(PointEffect::Color);
     }
 
-    updateData();
+    // Assign scalars and scalar effect
+    _scatterPlotWidget->setColors(colors);
+
+    // Render
+    update();
 }
 
-ScatterplotWidget* ScatterplotPlugin::getScatterplotWidget()
+ScatterplotWidget& ScatterplotPlugin::getScatterplotWidget()
 {
-    return _scatterPlotWidget;
-}
-
-hdps::CoreInterface* ScatterplotPlugin::getCore()
-{
-    return _core;
+    return *_scatterPlotWidget;
 }
 
 void ScatterplotPlugin::updateData()
@@ -505,20 +453,21 @@ void ScatterplotPlugin::updateData()
         return;
     
     // If no dataset has been selected, don't do anything
-    if (_points.isValid()) {
+    if (_positionDataset.isValid()) {
+
         // Get the selected dimensions to use as X and Y dimension in the plot
-        int xDim = _settingsAction.getPositionAction().getXDimension();
-        int yDim = _settingsAction.getPositionAction().getYDimension();
+        const auto xDim = _settingsAction.getPositionAction().getDimensionX();
+        const auto yDim = _settingsAction.getPositionAction().getDimensionY();
 
         // If one of the dimensions was not set, do not draw anything
         if (xDim < 0 || yDim < 0)
             return;
 
         // Determine number of points depending on if its a full dataset or a subset
-        _numPoints = _points->getNumPoints();
+        _numPoints = _positionDataset->getNumPoints();
 
         // Extract 2-dimensional points from the data set based on the selected dimensions
-        calculatePositions(*_points);
+        calculatePositions(*_positionDataset);
 
         // Pass the 2D points to the scatter plot widget
         _scatterPlotWidget->setData(&_positions);
@@ -533,54 +482,43 @@ void ScatterplotPlugin::updateData()
 
 void ScatterplotPlugin::calculatePositions(const Points& points)
 {
-    points.extractDataForDimensions(_positions, _settingsAction.getPositionAction().getXDimension(), _settingsAction.getPositionAction().getYDimension());
-}
-
-void ScatterplotPlugin::calculateScalars(std::vector<float>& scalars, const Points& points, int colorIndex)
-{
-    if (colorIndex >= 0) {
-        points.extractDataForDimension(scalars, colorIndex);
-    }
+    points.extractDataForDimensions(_positions, _settingsAction.getPositionAction().getDimensionX(), _settingsAction.getPositionAction().getDimensionY());
 }
 
 void ScatterplotPlugin::updateSelection()
 {
-    if (!_points.isValid())
+    if (!_positionDataset.isValid())
         return;
 
-    auto& selection = static_cast<Points&>(_points->getSelection());
+    auto& selection = _positionDataset->getSelection<Points>();
 
     std::vector<bool> selected;
     std::vector<char> highlights;
 
-    _points->selectedLocalIndices(selection.indices, selected);
+    _positionDataset->selectedLocalIndices(selection->indices, selected);
 
-    highlights.resize(_points->getNumPoints(), 0);
+    highlights.resize(_positionDataset->getNumPoints(), 0);
 
     for (int i = 0; i < selected.size(); i++)
         highlights[i] = selected[i] ? 1 : 0;
 
-    _scatterPlotWidget->setHighlights(highlights, selection.indices.size());
-
-    emit selectionChanged();
+    _scatterPlotWidget->setHighlights(highlights, static_cast<std::int32_t>(selection->indices.size()));
 }
 
 std::uint32_t ScatterplotPlugin::getNumberOfPoints() const
 {
-    if (!_points.isValid())
+    if (!_positionDataset.isValid())
         return 0;
 
-    return _points->getNumPoints();
+    return _positionDataset->getNumPoints();
 }
 
 std::uint32_t ScatterplotPlugin::getNumberOfSelectedPoints() const
 {
-    if (!_points.isValid())
+    if (!_positionDataset.isValid())
         return 0;
 
-    const Points& selection = static_cast<Points&>(_points->getSelection());
-
-    return static_cast<std::uint32_t>(selection.indices.size());
+    return static_cast<std::uint32_t>(_positionDataset->getSelection<Points>()->indices.size());
 }
 
 void ScatterplotPlugin::setXDimension(const std::int32_t& dimensionIndex)
@@ -593,20 +531,9 @@ void ScatterplotPlugin::setYDimension(const std::int32_t& dimensionIndex)
     updateData();
 }
 
-void ScatterplotPlugin::setColorDimension(const std::int32_t& dimensionIndex)
-{
-    std::vector<float> scalars;
-    calculateScalars(scalars, *_points, dimensionIndex);
-
-    _scatterPlotWidget->setScalars(scalars);
-    _scatterPlotWidget->setScalarEffect(PointEffect::Color);
-
-    updateData();
-}
-
 bool ScatterplotPlugin::canSelect() const
 {
-    return _points.isValid() && getNumberOfPoints() >= 0;
+    return _positionDataset.isValid() && getNumberOfPoints() >= 0;
 }
 
 bool ScatterplotPlugin::canSelectAll() const
@@ -626,56 +553,26 @@ bool ScatterplotPlugin::canInvertSelection() const
 
 void ScatterplotPlugin::selectAll()
 {
-    if (!_points.isValid())
+    if (!_positionDataset.isValid())
         return;
 
-    auto& selectionSet      = dynamic_cast<Points&>(_points->getSelection());
-    auto& selectionIndices  = selectionSet.indices;
-
-    if (_points->isFull()) {
-        selectionIndices.resize(_points->getNumPoints());
-        std::iota(selectionIndices.begin(), selectionIndices.end(), 0);
-    } else {
-        selectionIndices = _points->indices;
-    }
-
-    _points.notifySelectionChanged();
+    _positionDataset->selectAll();
 }
 
 void ScatterplotPlugin::clearSelection()
 {
-    if (!_points.isValid())
+    if (!_positionDataset.isValid())
         return;
 
-    auto& selectionSet          = dynamic_cast<Points&>(_points->getSelection());
-    auto& selectionSetIndices   = selectionSet.indices;
-
-    selectionSetIndices.clear();
-
-    _points.notifySelectionChanged();
+    _positionDataset->selectNone();
 }
 
 void ScatterplotPlugin::invertSelection()
 {
-    if (!_points.isValid())
+    if (!_positionDataset.isValid())
         return;
 
-    auto& pointsIndices = _points->indices;
-    auto& selectionSet  = dynamic_cast<Points&>(_points->getSelection());
-
-    if (_points->isFull()) {
-        pointsIndices.resize(_points->getNumPoints());
-        std::iota(pointsIndices.begin(), pointsIndices.end(), 0);
-    }
-
-    auto selectionIndicesSet = QSet<std::uint32_t>(pointsIndices.begin(), pointsIndices.end());
-
-    for (auto selectionSetIndex : selectionSet.indices)
-        selectionIndicesSet.remove(selectionSetIndex);
-
-    selectionSet.indices = std::vector<std::uint32_t>(selectionIndicesSet.begin(), selectionIndicesSet.end());
-
-    _points.notifySelectionChanged();
+    _positionDataset->selectInvert();
 }
 
 QIcon ScatterplotPluginFactory::getIcon() const
