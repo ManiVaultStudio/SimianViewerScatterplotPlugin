@@ -25,6 +25,13 @@ ManualClusteringAction::ManualClusteringAction(ScatterplotPlugin* scatterplotPlu
     _addClusterAction.setToolTip("Add cluster");
     _targetClusterDataset.setToolTip("Target cluster set");
 
+    const auto updateActions = [this]() -> void {
+        const auto positionDataset = _scatterplotPlugin->getPositionDataset();
+        setEnabled(positionDataset.isValid() && positionDataset->getSelectionSize() >= 1);
+    };
+
+    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, updateActions);
+
     // Update actions when the cluster name changed
     connect(&_nameAction, &StringAction::stringChanged, this, &ManualClusteringAction::updateActions);
 
@@ -106,7 +113,8 @@ void ManualClusteringAction::updateTargetClusterDatasets()
 
 void ManualClusteringAction::updateActions()
 {
-    const auto numberOfSelectedPoints   = _scatterplotPlugin->getNumberOfSelectedPoints();
+    const auto positionDataset          = _scatterplotPlugin->getPositionDataset();
+    const auto numberOfSelectedPoints   = positionDataset.isValid() ? positionDataset->getSelectionSize() : 0;
     const auto hasSelection             = numberOfSelectedPoints >= 1;
     const auto canAddCluster            = hasSelection && !_nameAction.getString().isEmpty();
 
@@ -130,6 +138,9 @@ ManualClusteringAction::Widget::Widget(QWidget* parent, ManualClusteringAction* 
     // Reset the cluster name
     manualClusteringAction->getNameAction().reset();
 
+    // Update the state of the actions
+    manualClusteringAction->updateActions();
+
     // And adjust the color
     manualClusteringAction->getColorAction().setColor(QColor::fromHsl(randomHue, randomSaturation, randomLightness));
 
@@ -138,12 +149,11 @@ ManualClusteringAction::Widget::Widget(QWidget* parent, ManualClusteringAction* 
 
         layout->setColumnMinimumWidth(1, 200);
 
+        // Populate layout with widgets from actions
         layout->addWidget(manualClusteringAction->getTargetClusterDataset().createLabelWidget(this), 0, 0);
         layout->addWidget(manualClusteringAction->getTargetClusterDataset().createWidget(this), 0, 1);
-
         layout->addWidget(manualClusteringAction->getNameAction().createLabelWidget(this), 1, 0);
         layout->addWidget(manualClusteringAction->getNameAction().createWidget(this), 1, 1);
-
         layout->addWidget(manualClusteringAction->getColorAction().createLabelWidget(this), 2, 0);
         layout->addWidget(manualClusteringAction->getColorAction().createWidget(this), 2, 1);
 
@@ -154,17 +164,22 @@ ManualClusteringAction::Widget::Widget(QWidget* parent, ManualClusteringAction* 
     else {
         auto layout = new QHBoxLayout();
 
-        auto currentClusterWidget   = manualClusteringAction->getTargetClusterDataset().createWidget(this);
+        layout->setMargin(0);
+
+        // Create widgets
+        auto targetClusterWidget    = manualClusteringAction->getTargetClusterDataset().createWidget(this);
         auto nameWidget             = manualClusteringAction->getNameAction().createWidget(this);
         auto colorWidget            = manualClusteringAction->getColorAction().createWidget(this);
         auto createWidget           = manualClusteringAction->getAddClusterAction().createWidget(this);
 
-        currentClusterWidget->setFixedWidth(100);
+        // Configure them
+        targetClusterWidget->setFixedWidth(100);
         nameWidget->setFixedWidth(100);
         colorWidget->setFixedWidth(26);
         createWidget->setFixedWidth(50);
 
-        layout->addWidget(currentClusterWidget);
+        // And add them to the layout
+        layout->addWidget(targetClusterWidget);
         layout->addWidget(nameWidget);
         layout->addWidget(colorWidget);
         layout->addWidget(createWidget);

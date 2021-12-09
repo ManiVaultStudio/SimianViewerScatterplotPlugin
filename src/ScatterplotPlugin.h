@@ -44,9 +44,6 @@ public:
     /** Get number of points in the position dataset */
     std::uint32_t getNumberOfPoints() const;
 
-    /** Get number of selected points in the position dataset */
-    std::uint32_t getNumberOfSelectedPoints() const;
-
 public:
     void createSubset(const bool& fromSourceData = false, const QString& name = "");
 

@@ -53,7 +53,7 @@ public:
 
     /**
      * Add dataset
-     * @param dataset Smart pointers to dataset
+     * @param dataset Smart pointer to dataset
      */
     void addDataset(const Dataset<DatasetImpl>& dataset);
 

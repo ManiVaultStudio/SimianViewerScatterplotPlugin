@@ -19,7 +19,8 @@ SubsetAction::SubsetAction(ScatterplotPlugin* scatterplotPlugin) :
     _createSubsetAction.setToolTip("Create subset from selected data points");
 
     const auto updateActions = [this]() -> void {
-        setEnabled(_scatterplotPlugin->getNumberOfSelectedPoints() >= 1);
+        const auto positionDataset = _scatterplotPlugin->getPositionDataset();
+        setEnabled(positionDataset.isValid() && positionDataset->getSelectionSize() >= 1);
     };
 
     connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, updateActions);

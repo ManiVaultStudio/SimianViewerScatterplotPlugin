@@ -513,14 +513,6 @@ std::uint32_t ScatterplotPlugin::getNumberOfPoints() const
     return _positionDataset->getNumPoints();
 }
 
-std::uint32_t ScatterplotPlugin::getNumberOfSelectedPoints() const
-{
-    if (!_positionDataset.isValid())
-        return 0;
-
-    return static_cast<std::uint32_t>(_positionDataset->getSelection<Points>()->indices.size());
-}
-
 void ScatterplotPlugin::setXDimension(const std::int32_t& dimensionIndex)
 {
     updateData();
