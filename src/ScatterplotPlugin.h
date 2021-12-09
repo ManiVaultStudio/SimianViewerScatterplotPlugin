@@ -54,15 +54,6 @@ public: // Dimension picking
     void setXDimension(const std::int32_t& dimensionIndex);
     void setYDimension(const std::int32_t& dimensionIndex);
 
-public: // Selection
-    bool canSelect() const;
-    bool canSelectAll() const;
-    bool canClearSelection() const;
-    bool canInvertSelection() const;
-    void selectAll();
-    void clearSelection();
-    void invertSelection();
-
 protected: // Data loading
 
     /** Invoked when the position points dataset changes */

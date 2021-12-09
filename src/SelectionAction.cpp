@@ -25,15 +25,18 @@ SelectionAction::SelectionAction(ScatterplotPlugin& scatterplotPlugin) :
     setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("mouse-pointer"));
     
     connect(&getSelectAllAction(), &QAction::triggered, [this]() {
-        _scatterplotPlugin.selectAll();
+        if (_scatterplotPlugin.getPositionDataset().isValid())
+            _scatterplotPlugin.getPositionDataset()->selectAll();
     });
 
     connect(&getClearSelectionAction(), &QAction::triggered, [this]() {
-        _scatterplotPlugin.clearSelection();
+        if (_scatterplotPlugin.getPositionDataset().isValid())
+            _scatterplotPlugin.getPositionDataset()->selectNone();
     });
 
     connect(&getInvertSelectionAction(), &QAction::triggered, [this]() {
-        _scatterplotPlugin.invertSelection();
+        if (_scatterplotPlugin.getPositionDataset().isValid())
+            _scatterplotPlugin.getPositionDataset()->selectInvert();
     });
 
     const auto updateFocusSelection = [this]() {

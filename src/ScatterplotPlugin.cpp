@@ -95,7 +95,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
                 });
             }
             else {
-                if (_positionDataset != candidateDataset) {
+                if (_positionDataset != candidateDataset && candidateDataset->getNumDimensions() >= 2) {
 
                     // The number of points is equal, so offer the option to replace the existing points dataset
                     dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]() {
@@ -327,8 +327,8 @@ void ScatterplotPlugin::selectPoints()
             break;
     }
 
-    // Apply the selection
-    _positionDataset->setSelection(targetSelectionIndices);
+    // Apply the selection indices
+    _positionDataset->setSelectionIndices(targetSelectionIndices);
 
     // Notify others that the selection changed
     _core->notifyDataSelectionChanged(_positionDataset);
@@ -529,50 +529,6 @@ void ScatterplotPlugin::setXDimension(const std::int32_t& dimensionIndex)
 void ScatterplotPlugin::setYDimension(const std::int32_t& dimensionIndex)
 {
     updateData();
-}
-
-bool ScatterplotPlugin::canSelect() const
-{
-    return _positionDataset.isValid() && getNumberOfPoints() >= 0;
-}
-
-bool ScatterplotPlugin::canSelectAll() const
-{
-    return getNumberOfPoints() == -1 ? false : getNumberOfSelectedPoints() != getNumberOfPoints();
-}
-
-bool ScatterplotPlugin::canClearSelection() const
-{
-    return getNumberOfPoints() == -1 ? false : getNumberOfSelectedPoints() >= 1;
-}
-
-bool ScatterplotPlugin::canInvertSelection() const
-{
-    return getNumberOfPoints() >= 0;
-}
-
-void ScatterplotPlugin::selectAll()
-{
-    if (!_positionDataset.isValid())
-        return;
-
-    _positionDataset->selectAll();
-}
-
-void ScatterplotPlugin::clearSelection()
-{
-    if (!_positionDataset.isValid())
-        return;
-
-    _positionDataset->selectNone();
-}
-
-void ScatterplotPlugin::invertSelection()
-{
-    if (!_positionDataset.isValid())
-        return;
-
-    _positionDataset->selectInvert();
 }
 
 QIcon ScatterplotPluginFactory::getIcon() const
