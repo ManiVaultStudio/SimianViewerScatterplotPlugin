@@ -27,7 +27,7 @@ ManualClusteringAction::ManualClusteringAction(ScatterplotPlugin* scatterplotPlu
 
     const auto updateActions = [this]() -> void {
         const auto positionDataset = _scatterplotPlugin->getPositionDataset();
-        setEnabled(positionDataset.isValid() && positionDataset->getSelectionSize() >= 1);
+        //setEnabled(positionDataset.isValid() && positionDataset->getSelectionSize() >= 1);
     };
 
     connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, updateActions);
