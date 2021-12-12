@@ -96,6 +96,14 @@ public:
     Vector3f getColorMapRange() const;
     void setColorMapRange(const float& min, const float& max);
 
+    /**
+     * Create screenshot
+     * @param width Width of the screen shot (in pixels)
+     * @param height Height of the screen shot (in pixels)
+     * @param backgroundColor Background color of the screen shot
+     */
+    void createScreenshot(std::int32_t width, std::int32_t height, const QString& fileName, const QColor& backgroundColor);
+
 protected:
     void initializeGL()         Q_DECL_OVERRIDE;
     void resizeGL(int w, int h) Q_DECL_OVERRIDE;

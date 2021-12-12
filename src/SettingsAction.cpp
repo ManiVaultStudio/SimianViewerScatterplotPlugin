@@ -17,6 +17,7 @@ SettingsAction::SettingsAction(ScatterplotPlugin* scatterplotPlugin) :
     _manualClusteringAction(scatterplotPlugin),
     _selectionAction(*scatterplotPlugin),
     _plotAction(scatterplotPlugin),
+    _screenshotAction(this, *scatterplotPlugin),
     _miscellaneousAction(scatterplotPlugin)
 {
     const auto updateEnabled = [this]() {
@@ -68,6 +69,7 @@ SettingsAction::Widget::Widget(QWidget* parent, SettingsAction* settingsAction) 
     addStateWidget(&settingsAction->_manualClusteringAction, 0);
     addStateWidget(&settingsAction->_selectionAction, 2);
     addStateWidget(&settingsAction->getColoringAction().getColorMapAction(), 100);
+    addStateWidget(&settingsAction->getScreenshotAction(), 1);
     addStateWidget(&settingsAction->_miscellaneousAction, 1);
 
     _toolBarLayout.addStretch(1);
