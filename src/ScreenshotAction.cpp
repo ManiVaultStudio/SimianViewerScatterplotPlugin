@@ -5,12 +5,16 @@
 #include "Application.h"
 
 #include <QMenu>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QDesktopServices>
 #include <QDialogButtonBox>
 
 namespace hdps {
 
 using namespace gui;
 
+QString ScreenshotAction::SETTING_KEY_OUTPUT_DIR            = "OutputDir";
 QString ScreenshotAction::SETTING_KEY_LOCK_ASPECT_RATIO     = "LockAspectRatio";
 QString ScreenshotAction::SETTING_KEY_BACKGROUND_COLOR      = "BackgroundColor";
 QString ScreenshotAction::SETTING_KEY_OPEN_AFTER_CREATION   = "OpenScreenshotAfterCreation";
@@ -28,6 +32,7 @@ ScreenshotAction::ScreenshotAction(QObject* parent, ScatterplotPlugin& scatterpl
     _scaleFourAction(this, "400%"),
     _backgroundColorAction(this, "Background color", QColor(Qt::white), QColor(Qt::white)),
     _createAction(this, "Create"),
+    _createDefaultAction(this, "Create"),
     _openAfterCreationAction(this, "Open"),
     _aspectRatio()
 {
@@ -44,12 +49,14 @@ ScreenshotAction::ScreenshotAction(QObject* parent, ScatterplotPlugin& scatterpl
     _scaleFourAction.setToolTip("Scale to 400% of the view");
     _backgroundColorAction.setToolTip("Background color of the screenshot");
     _createAction.setToolTip("Create the screenshot");
+    _createDefaultAction.setToolTip("Create the screenshot with default settings");
     _openAfterCreationAction.setToolTip("Open screenshot image file after creation");
 
     _targetWidthAction.setSuffix("px");
     _targetHeightAction.setSuffix("px");
 
     _createAction.setIcon(Application::getIconFont("FontAwesome").getIcon("camera"));
+    _createDefaultAction.setIcon(Application::getIconFont("FontAwesome").getIcon("camera"));
 
     // Update the state of the target height action
     const auto updateTargetHeightAction = [this]() -> void {
@@ -109,9 +116,12 @@ ScreenshotAction::ScreenshotAction(QObject* parent, ScatterplotPlugin& scatterpl
 
     // Create the screenshot when the create action is triggered
     connect(&_createAction, &TriggerAction::triggered, this, [this]() {
-        QApplication::setOverrideCursor(Qt::WaitCursor);
-        _scatterplotPlugin.getScatterplotWidget().createScreenshot(_targetWidthAction.getValue(), _targetWidthAction.getValue(), "test.jpg", _backgroundColorAction.getColor());
-        QApplication::restoreOverrideCursor();
+        createScreenshot();
+    });
+
+    // Create the screenshot with default settings when the create default action is triggered
+    connect(&_createDefaultAction, &TriggerAction::triggered, this, [this]() {
+        createScreenshot(true);
     });
 
     // Load from settings
@@ -142,6 +152,38 @@ void ScreenshotAction::initializeTargetSize()
     _targetHeightAction.setValue(_scatterplotPlugin.getScatterplotWidget().height());
 
     _aspectRatio = static_cast<float>(_targetHeightAction.getValue()) / static_cast<float>(_targetWidthAction.getValue());
+}
+
+void ScreenshotAction::createScreenshot(bool defaultSettings /*= false*/)
+{
+    // Get output dir from settings
+    const auto outputDir = _scatterplotPlugin.getSetting(SETTING_KEY_OUTPUT_DIR, "/").toString();
+
+    // Get screenshot image file name (*.png *.jpg *.bmp)
+    const auto fileName = QFileDialog::getSaveFileName(nullptr, tr("Save screenshot image"), outputDir, tr("Image Files (*.jpg)"));
+
+    // Save if we have a valid filename
+    if (!fileName.isEmpty()) {
+
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+        {
+            // Get screenshot dimensions and background color
+            const auto width            = defaultSettings ? _scatterplotPlugin.getScatterplotWidget().width() : _targetWidthAction.getValue();
+            const auto height           = defaultSettings ? _scatterplotPlugin.getScatterplotWidget().height() : _targetHeightAction.getValue();
+            const auto backgroundColor  = defaultSettings ? QColor(Qt::white) : _backgroundColorAction.getColor();
+
+            // Create and save the screenshot
+            _scatterplotPlugin.getScatterplotWidget().createScreenshot(width, height, fileName, backgroundColor);
+
+            // Save new output dir to settings
+            _scatterplotPlugin.setSetting(SETTING_KEY_OUTPUT_DIR, QFileInfo(fileName).absolutePath());
+
+            // Open the image file in an external program if the user requested this
+            if (_openAfterCreationAction.isChecked())
+                QDesktopServices::openUrl(fileName);
+        }
+        QApplication::restoreOverrideCursor();
+    }
 }
 
 ScreenshotAction::Widget::Widget(QWidget* parent, ScreenshotAction* screenshotAction, const std::int32_t& widgetFlags) :
@@ -187,7 +229,7 @@ ScreenshotAction::Widget::Widget(QWidget* parent, ScreenshotAction* screenshotAc
 
         layout->setMargin(0);
 
-        layout->addWidget(screenshotAction->getCreateAction().createWidget(this, TriggerAction::WidgetFlag::IconText));
+        layout->addWidget(screenshotAction->getCreateDefaultAction().createWidget(this, TriggerAction::WidgetFlag::IconText));
 
         setLayout(layout);
     }

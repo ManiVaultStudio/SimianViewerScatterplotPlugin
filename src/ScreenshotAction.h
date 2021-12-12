@@ -41,6 +41,12 @@ public:
     /** Grab target size from scatter plot widget */
     void initializeTargetSize();
 
+    /**
+     * Create screenshot
+     * @param defaultSettings Use default settings for creating the screenshot
+     */
+    void createScreenshot(bool defaultSettings = false);
+
 public: // Action getters
 
     IntegralAction& getTargetWidthAction() { return _targetWidthAction; }
@@ -53,6 +59,7 @@ public: // Action getters
     TriggerAction& getScaleFourAction() { return _scaleFourAction; }
     ColorAction& getBackgroundColorAction() { return _backgroundColorAction; }
     TriggerAction& getCreateAction() { return _createAction; }
+    TriggerAction& getCreateDefaultAction() { return _createDefaultAction; }
     ToggleAction& getOpenAfterCreationAction() { return _openAfterCreationAction; }
 
 protected:
@@ -67,13 +74,15 @@ protected:
     TriggerAction           _scaleFourAction;           /** Scale four times action */
     ColorAction             _backgroundColorAction;     /** Background color action */
     TriggerAction           _createAction;              /** Create action */
+    TriggerAction           _createDefaultAction;       /** Create with default settings action */
     ToggleAction            _openAfterCreationAction;   /** Open screenshot after creation action */
     float                   _aspectRatio;               /** Screenshot aspect ratio */
 
     /** Setting prefixes */
-    static QString SETTING_KEY_LOCK_ASPECT_RATIO;
-    static QString SETTING_KEY_BACKGROUND_COLOR;
-    static QString SETTING_KEY_OPEN_AFTER_CREATION;
+    static QString SETTING_KEY_OUTPUT_DIR;              /** Default output directory */
+    static QString SETTING_KEY_LOCK_ASPECT_RATIO;       /** Lock the image aspect ratio */
+    static QString SETTING_KEY_BACKGROUND_COLOR;        /** Screenshot background color */
+    static QString SETTING_KEY_OPEN_AFTER_CREATION;     /** Whether screenshot images should be opened after creation */
 };
 
 }

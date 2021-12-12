@@ -310,44 +310,55 @@ void ScatterplotWidget::createScreenshot(std::int32_t width, std::int32_t height
     if (!_isInitialized)
         return;
 
+    // Exit prematurely if the file name is invalid
+    if (fileName.isEmpty())
+        return;
+
     makeCurrent();
 
     try {
-        QOpenGLFramebufferObject fbo(width, height, QOpenGLFramebufferObject::CombinedDepthStencil);
+        QOpenGLFramebufferObject fbo(width, height, QOpenGLFramebufferObject::Depth);
 
-        fbo.bind();
+        // Bind the FBO and render into it when successfully bound
+        if (fbo.bind()) {
 
-        // Clear the widget to the background color
-        glClearColor(backgroundColor.redF(), backgroundColor.greenF(), backgroundColor.blueF(), backgroundColor.alphaF());
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            // Clear the widget to the background color
+            glClearColor(backgroundColor.redF(), backgroundColor.greenF(), backgroundColor.blueF(), backgroundColor.alphaF());
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Reset the blending function
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            // Reset the blending function
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // Resize OpenGL to intended screenshot size
-        resizeGL(width, height);
+            // Resize OpenGL to intended screenshot size
+            resizeGL(width, height);
 
-        switch (_renderMode)
-        {
-            case SCATTERPLOT:
-                _pointRenderer.render();
-                break;
+            switch (_renderMode)
+            {
+                case SCATTERPLOT:
+                {
+                    _pointRenderer.setPointScaling(Relative);
+                    _pointRenderer.render();
+                    _pointRenderer.setPointScaling(Absolute);
 
-            case DENSITY:
-            case LANDSCAPE:
-                _densityRenderer.setRenderMode(_renderMode == DENSITY ? DensityRenderer::DENSITY : DensityRenderer::LANDSCAPE);
-                _densityRenderer.render();
-                break;
+                    break;
+                }
+
+                case DENSITY:
+                case LANDSCAPE:
+                    _densityRenderer.setRenderMode(_renderMode == DENSITY ? DensityRenderer::DENSITY : DensityRenderer::LANDSCAPE);
+                    _densityRenderer.render();
+                    break;
+            }
+
+            // Save FBO image to disk
+            fbo.toImage().save(fileName);
+
+            // Resize OpenGL back to original OpenGL widget size
+            resizeGL(this->width(), this->height());
+
+            fbo.release();
         }
-
-        // Save FBO image to disk
-        fbo.toImage().save(fileName);
-
-        // Resize OpenGL back to original OpenGL widget size
-        resizeGL(this->width(), this->height());
-
-        update();
     }
     catch (std::exception& e)
     {
