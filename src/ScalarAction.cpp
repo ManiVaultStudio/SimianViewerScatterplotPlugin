@@ -43,10 +43,6 @@ void ScalarAction::addDataset(const Dataset<DatasetImpl>& dataset)
     // Get reference to the point size source model
     auto& sourceModel = _sourceAction.getModel();
 
-    // Avoid duplicates
-    if (sourceModel.rowIndex(dataset) != 0)
-        return;
-
     // Add dataset to the list of candidate datasets
     sourceModel.addDataset(dataset);
 
@@ -88,7 +84,7 @@ Dataset<DatasetImpl> ScalarAction::getCurrentDataset()
     const auto currentSourceIndex = _sourceAction.getPickerAction().getCurrentIndex();
 
     // Only proceed if we have a valid point size dataset row index
-    if (currentSourceIndex < 1)
+    if (currentSourceIndex < ScalarSourceModel::DefaultRow::DatasetStart)
         return Dataset<DatasetImpl>();
 
     return scalarSourceModel.getDataset(currentSourceIndex);
@@ -104,9 +100,24 @@ void ScalarAction::setCurrentDataset(const Dataset<DatasetImpl>& dataset)
         _sourceAction.getPickerAction().setCurrentIndex(datasetRowIndex);
 }
 
-bool ScalarAction::isConstant() const
+void ScalarAction::setCurrentSourceIndex(bool sourceIndex)
 {
-    return _sourceAction.getPickerAction().getCurrentIndex() == 0;
+    _sourceAction.getPickerAction().setCurrentIndex(sourceIndex);
+}
+
+bool ScalarAction::isSourceConstant() const
+{
+    return _sourceAction.getPickerAction().getCurrentIndex() == ScalarSourceModel::DefaultRow::Constant;
+}
+
+bool ScalarAction::isSourceSelection() const
+{
+    return _sourceAction.getPickerAction().getCurrentIndex() == ScalarSourceModel::DefaultRow::Selection;
+}
+
+bool ScalarAction::isSourceDataset() const
+{
+    return _sourceAction.getPickerAction().getCurrentIndex() >= ScalarSourceModel::DefaultRow::DatasetStart;
 }
 
 ScalarAction::Widget::Widget(QWidget* parent, ScalarAction* scalarAction) :
