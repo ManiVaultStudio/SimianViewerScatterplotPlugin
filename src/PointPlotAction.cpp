@@ -234,18 +234,15 @@ void PointPlotAction::updateDefaultDatasets()
     // Loop over all children and possibly add them to the datasets vector
     for (auto child : children) {
 
-        // Get smart pointer to child dataset
-        const auto childDataset = child->getDataset();
+        // Get smart pointer to points child dataset
+        const auto points = child->getDataset<Points>();
 
-        // Get the data type
-        const auto dataType = childDataset->getDataType();
-
-        // Add if points/clusters and not derived
-        if (dataType != PointType)
+        // Do not add if we do not have a valid points dataset
+        if (!points.isValid())
             continue;
 
-        // Convert child dataset to points smart pointer
-        auto points = Dataset<Points>(childDataset);
+        // Only add point datasets with the same number of points
+        if (points->getNumPoints() != positionDataset->getNumPoints())
 
         // Add datasets
         _sizeAction.addDataset(points);
