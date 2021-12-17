@@ -424,8 +424,8 @@ void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uin
 
 void ScatterplotPlugin::loadColors(const Dataset<Clusters>& clusters)
 {
-    // Only proceed with valid clusters dataset
-    if (!clusters.isValid())
+    // Only proceed with valid clusters and position dataset
+    if (!clusters.isValid() || !_positionDataset.isValid())
         return;
 
     // Mapping from local to global indices
@@ -434,30 +434,23 @@ void ScatterplotPlugin::loadColors(const Dataset<Clusters>& clusters)
     // Get global indices from the position dataset
     _positionDataset->getGlobalIndices(globalIndices);
 
-    // Generate color buffer for points
-    std::vector<Vector3f> colors(_positions.size());
+    // Generate color buffer for global and local colors
+    std::vector<Vector3f> globalColors(globalIndices.back() + 1);
+    std::vector<Vector3f> localColors(_positions.size());
 
-    std::int32_t colorIndex = 0;
+    // Loop over all clusters and populate global colors
+    for (const auto& cluster : clusters->getClusters())
+        for (const auto& index : cluster.getIndices())
+            globalColors[globalIndices[index]] = Vector3f(cluster.getColor().redF(), cluster.getColor().greenF(), cluster.getColor().blueF());
 
-    // Loop over all global indices and find the corresponding cluster color
-    for (const auto& globalIndex : globalIndices) {
+    std::int32_t localColorIndex = 0;
 
-        // Loop over all clusters
-        for (const auto& cluster : clusters->getClusters())
-        {
-            // Find the global index
-            auto it = std::find(cluster.getIndices().begin(), cluster.getIndices().end(), globalIndex);
-
-            // If it exists, set the color
-            if (it != cluster.getIndices().end())
-                colors[colorIndex] = Vector3f(cluster.getColor().redF(), cluster.getColor().greenF(), cluster.getColor().blueF());
-        }
-
-        colorIndex++;
-    }
+    // Loop over all global indices and find the corresponding local color
+    for (const auto& globalIndex : globalIndices)
+        localColors[localColorIndex++] = globalColors[globalIndex];
 
     // Apply colors to scatter plot widget without modification
-    _scatterPlotWidget->setColors(colors);
+    _scatterPlotWidget->setColors(localColors);
 
     // Render
     update();

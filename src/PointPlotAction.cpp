@@ -271,18 +271,24 @@ void PointPlotAction::updateScatterPlotWidgetPointSizeScalars()
         // Get smart pointer to current position dataset
         auto positionDataset = _scatterplotPlugin->getPositionDataset();
 
-        // Get smart pointer to the position selection dataset
-        auto selectionSet = positionDataset->getSelection<Points>();
-
         // Default point size for all
         std::fill(_pointSizeScalars.begin(), _pointSizeScalars.end(), _sizeAction.getMagnitudeAction().getValue());
 
         // Establish point size of selected points
         const auto pointSizeSelectedPoints = _sizeAction.getMagnitudeAction().getValue() + _sizeAction.getSourceAction().getOffsetAction().getValue();
 
-        // And selected point size for selected points
-        for (const auto& selectionIndex : selectionSet->indices)
-            _pointSizeScalars[selectionIndex] = pointSizeSelectedPoints;
+        std::vector<bool> selected;
+
+        // Get selected local indices from position dataset
+        positionDataset->selectedLocalIndices(positionDataset->getSelection<Points>()->indices, selected);
+
+        for (int i = 0; i < selected.size(); i++) {
+            if (!selected[i])
+                continue;
+
+            // Selected point size for selected points
+            _pointSizeScalars[i] = pointSizeSelectedPoints;
+        }
     }
 
     // Modulate point size by dataset
