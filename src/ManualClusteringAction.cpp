@@ -107,8 +107,13 @@ void ManualClusteringAction::updateTargetClusterDatasets()
     if (!_scatterplotPlugin->getPositionDataset().isValid())
         return;
 
+    const auto clusterDatasets = _scatterplotPlugin->getPositionDataset()->getChildren(ClusterType);
+
     // Update pickers
-    _targetClusterDataset.setDatasets(_scatterplotPlugin->getPositionDataset()->getChildren(ClusterType));
+    _targetClusterDataset.setDatasets(clusterDatasets);
+
+    if (!clusterDatasets.isEmpty())
+        _targetClusterDataset.setCurrentDataset(clusterDatasets.first());
 }
 
 void ManualClusteringAction::updateActions()
