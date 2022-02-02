@@ -29,6 +29,9 @@ SettingsAction::SettingsAction(ScatterplotPlugin* scatterplotPlugin) :
 
     updateEnabled();
 
+    _exportAction.setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("camera"));
+    _exportAction.setDefaultWidgetFlags(TriggerAction::Icon);
+
     connect(&_exportAction, &TriggerAction::triggered, this, [this]() {
         ExportDialog exportDialog(nullptr, *_scatterplotPlugin);
 
