@@ -310,7 +310,14 @@ void ScatterplotWidget::createScreenshot(std::int32_t width, std::int32_t height
     makeCurrent();
 
     try {
-        QOpenGLFramebufferObject fbo(width, height, QOpenGLFramebufferObject::Depth);
+
+        // Use custom FBO format
+        QOpenGLFramebufferObjectFormat fboFormat;
+        
+        fboFormat.setTextureTarget(GL_TEXTURE_2D);
+        fboFormat.setInternalTextureFormat(GL_RGB);
+
+        QOpenGLFramebufferObject fbo(width, height, fboFormat);
 
         // Bind the FBO and render into it when successfully bound
         if (fbo.bind()) {
@@ -366,11 +373,13 @@ void ScatterplotWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
+#ifdef SCATTER_PLOT_WIDGET_VERBOSE
     qDebug() << "Initializing scatterplot widget with context: " << context();
 
     std::string versionString = std::string((const char*) glGetString(GL_VERSION));
 
     qDebug() << versionString.c_str();
+#endif
 
     connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScatterplotWidget::cleanup);
 
