@@ -22,8 +22,8 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
 {
     setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("palette"));
 
-    scatterplotPlugin->addAction(&_colorByAction);
-    scatterplotPlugin->addAction(&_dimensionAction);
+    _scatterplotPlugin->getWidget().addAction(&_colorByAction);
+    _scatterplotPlugin->getWidget().addAction(&_dimensionAction);
 
     _colorByAction.setCustomModel(&_colorByModel);
     _colorByAction.setToolTip("Color by");
@@ -303,7 +303,7 @@ void ColoringAction::updateScatterplotWidgetColorMap()
             else {
 
                 // Update the scatter plot widget with the color map
-                getScatterplotWidget().setColorMap(_colorMapAction.getColorMapImage());
+                getScatterplotWidget().setColorMap(_colorMapAction.getColorMapImage().mirrored(false, true));
             }
 
             break;
