@@ -295,7 +295,10 @@ void ScatterplotPlugin::selectPoints()
             targetSelectionIndices.push_back(localGlobalIndices[i]);
     }
 
-    switch (_scatterPlotWidget->getPixelSelectionTool().getModifier())
+    // Selection should be subtracted when the selection process was aborted by the user (e.g. by pressing the escape key)
+    const auto selectionModifier = _scatterPlotWidget->getPixelSelectionTool().isAborted() ? PixelSelectionModifierType::Remove : _scatterPlotWidget->getPixelSelectionTool().getModifier();
+
+    switch (selectionModifier)
     {
         case PixelSelectionModifierType::Replace:
             break;
@@ -309,7 +312,7 @@ void ScatterplotPlugin::selectPoints()
             // Create a set from the selection set indices
             QSet<std::uint32_t> set(selectionSetIndices.begin(), selectionSetIndices.end());
 
-            switch (_scatterPlotWidget->getPixelSelectionTool().getModifier())
+            switch (selectionModifier)
             {
                 // Add points to the current selection
                 case PixelSelectionModifierType::Add:
