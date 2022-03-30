@@ -243,7 +243,7 @@ void ScatterplotPlugin::loadData(const Datasets& datasets)
 
 void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, const QString& name /*= ""*/)
 {
-    auto subsetPoints = _positionDataset->getSourceDataset<Points>();
+    auto subsetPoints = fromSourceData ? _positionDataset->getSourceDataset<Points>() : _positionDataset;
 
     // Create the subset
     auto subset = subsetPoints->createSubsetFromSelection(_positionDataset->getGuiName(), _positionDataset);
