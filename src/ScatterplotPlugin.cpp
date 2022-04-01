@@ -186,6 +186,8 @@ void ScatterplotPlugin::init()
     bottomToolbarWidget->setLayout(bottomToolbarLayout);
 
     bottomToolbarLayout->setMargin(4);
+    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createLabelWidget(&getWidget()));
+    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createWidget(&getWidget()));
     bottomToolbarLayout->addWidget(_settingsAction.getPlotAction().getPointPlotAction().getFocusSelection().createWidget(&getWidget()));
     bottomToolbarLayout->addStretch(1);
     bottomToolbarLayout->addWidget(_settingsAction.getExportAction().createWidget(&getWidget()));
