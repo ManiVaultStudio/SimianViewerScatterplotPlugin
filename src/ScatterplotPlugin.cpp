@@ -554,9 +554,37 @@ ViewPlugin* ScatterplotPluginFactory::produce()
     return new ScatterplotPlugin(this);
 }
 
-hdps::DataTypes ScatterplotPluginFactory::supportedDataTypes() const
+QList<QAction*> ScatterplotPluginFactory::getProducers(const hdps::Datasets& datasets) const
 {
-    DataTypes supportedTypes;
-    supportedTypes.append(PointType);
-    return supportedTypes;
+    QList<QAction*> producerActions;
+
+    const auto getInstance = [this]() -> ScatterplotPlugin* {
+        return dynamic_cast<ScatterplotPlugin*>(Application::core()->requestPlugin(getKind()));
+    };
+
+    const auto numberOfDatasets = datasets.count();
+
+    if (areAllDatasetsOfTheSameType(datasets, "Points")) {
+        if (numberOfDatasets == 1) {
+            auto producerAction = createProducerAction("Scatterplot", "Load selected dataset in scatter plot viewer", "braille");
+
+            connect(producerAction, &QAction::triggered, [this, getInstance, datasets]() -> void {
+                getInstance()->loadData(datasets);
+            });
+
+            producerActions << producerAction;
+        }
+        else {
+            auto producerAction = createProducerAction("Side-by-side", "View selected datasets side-by-side in separate scatter plot viewers", "braille");
+
+            connect(producerAction, &QAction::triggered, [this, getInstance, datasets]() -> void {
+                for (auto dataset : datasets)
+                    getInstance()->loadData(Datasets({ dataset }));
+                });
+
+            producerActions << producerAction;
+        }
+    }
+
+    return producerActions;
 }
