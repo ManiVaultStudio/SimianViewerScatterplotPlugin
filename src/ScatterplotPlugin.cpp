@@ -554,62 +554,9 @@ ViewPlugin* ScatterplotPluginFactory::produce()
     return new ScatterplotPlugin(this);
 }
 
-QList<QAction*> ScatterplotPluginFactory::getProducers(const hdps::Datasets& datasets) const
+hdps::DataTypes ScatterplotPluginFactory::supportedDataTypes() const
 {
-    QList<QAction*> producerActions;
-
-    const auto getInstance = [this]() -> ScatterplotPlugin* {
-        return dynamic_cast<ScatterplotPlugin*>(Application::core()->requestPlugin(getKind()));
-    };
-
-    const auto numberOfDatasets = datasets.count();
-
-    if (PluginFactory::areAllDatasetsOfTheSameType(datasets, "Points")) {
-        if (numberOfDatasets == 1) {
-            auto producerAction = createProducerAction("Scatterplot", "Load selected dataset in scatter plot viewer", "braille");
-
-            connect(producerAction, &QAction::triggered, [this, getInstance, datasets]() -> void {
-                getInstance()->loadData(datasets);
-            });
-
-            producerActions << producerAction;
-        }
-        else {
-            auto producerAction = createProducerAction("Side-by-side", "View selected datasets side-by-side in separate scatter plot viewers", "braille");
-
-            connect(producerAction, &QAction::triggered, [this, getInstance, datasets]() -> void {
-                for (auto dataset : datasets)
-                    getInstance()->loadData(Datasets({ dataset }));
-                });
-
-            producerActions << producerAction;
-        }
-    }
-
-    const auto numberOfPointsDatasets   = PluginFactory::getNumberOfDatasetsForType(datasets, "Points");
-    const auto numberOfClusterDatasets  = PluginFactory::getNumberOfDatasetsForType(datasets, "Cluster");
-
-    
-    // (Points Clusters)
-    if (numberOfPointsDatasets == numberOfClusterDatasets) {
-        QRegularExpression re("(Points, Clusters)");
-
-        const auto reMatch = re.match(PluginFactory::getDatasetTypesAsStringList(datasets).join(","));
-
-        if (reMatch.hasMatch() && reMatch.captured().count() == numberOfPointsDatasets) {
-            auto producerAction = createProducerAction("Scatterplot", "Load points dataset in separate viewer and apply cluster", "braille");
-
-            connect(producerAction, &QAction::triggered, [this, getInstance, datasets, numberOfPointsDatasets]() -> void {
-
-                for (int i = 0; i < numberOfPointsDatasets; i++) {
-                    getInstance()->loadData(Datasets({ datasets[i * 2] }));
-                    getInstance()->loadColors(Dataset<Clusters>(datasets[i * 2 + 1]));
-                }
-            });
-
-            producerActions << producerAction;
-        }
-    }
-
-    return producerActions;
+    DataTypes supportedTypes;
+    supportedTypes.append(PointType);
+    return supportedTypes;
 }
