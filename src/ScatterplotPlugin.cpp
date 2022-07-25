@@ -564,7 +564,7 @@ QList<QAction*> ScatterplotPluginFactory::getProducers(const hdps::Datasets& dat
 
     const auto numberOfDatasets = datasets.count();
 
-    if (areAllDatasetsOfTheSameType(datasets, "Points")) {
+    if (PluginFactory::areAllDatasetsOfTheSameType(datasets, "Points")) {
         if (numberOfDatasets == 1) {
             auto producerAction = createProducerAction("Scatterplot", "Load selected dataset in scatter plot viewer", "braille");
 
@@ -581,6 +581,31 @@ QList<QAction*> ScatterplotPluginFactory::getProducers(const hdps::Datasets& dat
                 for (auto dataset : datasets)
                     getInstance()->loadData(Datasets({ dataset }));
                 });
+
+            producerActions << producerAction;
+        }
+    }
+
+    const auto numberOfPointsDatasets   = PluginFactory::getNumberOfDatasetsForType(datasets, "Points");
+    const auto numberOfClusterDatasets  = PluginFactory::getNumberOfDatasetsForType(datasets, "Cluster");
+
+    
+    // (Points Clusters)
+    if (numberOfPointsDatasets == numberOfClusterDatasets) {
+        QRegularExpression re("(Points, Clusters)");
+
+        const auto reMatch = re.match(PluginFactory::getDatasetTypesAsStringList(datasets).join(","));
+
+        if (reMatch.hasMatch() && reMatch.captured().count() == numberOfPointsDatasets) {
+            auto producerAction = createProducerAction("Scatterplot", "Load points dataset in separate viewer and apply cluster", "braille");
+
+            connect(producerAction, &QAction::triggered, [this, getInstance, datasets, numberOfPointsDatasets]() -> void {
+
+                for (int i = 0; i < numberOfPointsDatasets; i++) {
+                    getInstance()->loadData(Datasets({ datasets[i * 2] }));
+                    getInstance()->loadColors(Dataset<Clusters>(datasets[i * 2 + 1]));
+                }
+            });
 
             producerActions << producerAction;
         }
