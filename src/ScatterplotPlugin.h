@@ -2,14 +2,18 @@
 
 #include <ViewPlugin.h>
 
-#include "util/PixelSelectionTool.h"
+#include <util/PixelSelectionTool.h>
+#include <actions/TriggerAction.h>
 
 #include "Common.h"
 
 #include "SettingsAction.h"
 
+#include <QTimer>
+
 using namespace hdps::plugin;
 using namespace hdps::util;
+using namespace hdps::gui;
 
 class Points;
 
@@ -28,7 +32,7 @@ namespace hdps
 class ScatterplotPlugin : public ViewPlugin
 {
     Q_OBJECT
-    
+
 public:
     ScatterplotPlugin(const PluginFactory* factory);
     ~ScatterplotPlugin() override;
@@ -104,11 +108,13 @@ private:
     Dataset<Points>                 _positionSourceDataset;     /** Smart pointer to source of the points dataset for point position (if any) */
     std::vector<hdps::Vector2f>     _positions;                 /** Point positions */
     unsigned int                    _numPoints;                 /** Number of point positions */
-    
-    
+    QTimer                          _selectPointsTimer;         /** Timer to limit the refresh rate of selection updates */
+
+    static const std::int32_t LAZY_UPDATE_INTERVAL = 2;
+
 protected:
-    ScatterplotWidget*          _scatterPlotWidget;
-    hdps::gui::DropWidget*      _dropWidget;
+    ScatterplotWidget* _scatterPlotWidget;
+    hdps::gui::DropWidget* _dropWidget;
     SettingsAction              _settingsAction;
 };
 
@@ -119,18 +125,27 @@ protected:
 class ScatterplotPluginFactory : public ViewPluginFactory
 {
     Q_INTERFACES(hdps::plugin::ViewPluginFactory hdps::plugin::PluginFactory)
-    Q_OBJECT
-    Q_PLUGIN_METADATA(IID   "nl.tudelft.ScatterplotPlugin"
-                      FILE  "ScatterplotPlugin.json")
-    
+        Q_OBJECT
+        Q_PLUGIN_METADATA(IID   "nl.tudelft.ScatterplotPlugin"
+            FILE  "ScatterplotPlugin.json")
+
 public:
     ScatterplotPluginFactory(void) {}
     ~ScatterplotPluginFactory(void) override {}
 
-    /** Returns the plugin icon */
-    QIcon getIcon() const override;
+    /**
+     * Get plugin icon
+     * @param color Icon color for flat (font) icons
+     * @return Icon
+     */
+    QIcon getIcon(const QColor& color = Qt::black) const override;
 
     ViewPlugin* produce() override;
 
-    hdps::DataTypes supportedDataTypes() const override;
+    /**
+     * Get plugin trigger actions given \p datasets
+     * @param datasets Vector of input datasets
+     * @return Vector of plugin trigger actions
+     */
+    PluginTriggerActions getPluginTriggerActions(const hdps::Datasets& datasets) const override;
 };
