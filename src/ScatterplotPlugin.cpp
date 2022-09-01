@@ -168,6 +168,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
         return dropRegions;
     });
 
+    /*
     _selectPointsTimer.setSingleShot(true);
 
     connect(&_selectPointsTimer, &QTimer::timeout, this, [this]() -> void {
@@ -178,6 +179,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
             selectPoints();
         }
     });
+    */
 }
 
 ScatterplotPlugin::~ScatterplotPlugin()
@@ -216,8 +218,10 @@ void ScatterplotPlugin::init()
 
     // Update the selection when the pixel selection tool selected area changed
     connect(&_scatterPlotWidget->getPixelSelectionTool(), &PixelSelectionTool::areaChanged, [this]() {
-        if (_scatterPlotWidget->getPixelSelectionTool().isNotifyDuringSelection())
-            _selectPointsTimer.start(LAZY_UPDATE_INTERVAL);
+        if (_scatterPlotWidget->getPixelSelectionTool().isNotifyDuringSelection()) {
+            //_selectPointsTimer.start(LAZY_UPDATE_INTERVAL);
+            selectPoints();
+        }
     });
 
     // Update the selection when the pixel selection process ended
@@ -225,7 +229,8 @@ void ScatterplotPlugin::init()
         if (_scatterPlotWidget->getPixelSelectionTool().isNotifyDuringSelection())
             return;
 
-        _selectPointsTimer.start(LAZY_UPDATE_INTERVAL);
+        //_selectPointsTimer.start(LAZY_UPDATE_INTERVAL);
+        selectPoints();
     });
 
     // Load points when the pointer to the position dataset changes
