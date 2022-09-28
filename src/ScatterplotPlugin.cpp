@@ -501,6 +501,13 @@ void ScatterplotPlugin::updateData()
         if (xDim < 0 || yDim < 0)
             return;
 
+        // Ensure that if positionDataset has now more points, the additional points are plotted
+        if (_numPoints != _positionDataset->getNumPoints())
+        {
+            _settingsAction.getPlotAction().getPointPlotAction().updateScatterPlotWidgetPointSizeScalars();
+            _settingsAction.getPlotAction().getPointPlotAction().updateScatterPlotWidgetPointOpacityScalars();
+        }
+
         // Determine number of points depending on if its a full dataset or a subset
         _numPoints = _positionDataset->getNumPoints();
 
