@@ -42,7 +42,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _scatterPlotWidget(new ScatterplotWidget()),
     _dropWidget(nullptr),
     _settingsAction(this),
-    _selectPointsTimer()
+    _selectPointsTimer(),
+    _showHighlights(true)
 {
     setObjectName("Scatterplot");
 
@@ -551,8 +552,9 @@ void ScatterplotPlugin::updateSelection()
 
     for (int i = 0; i < selected.size(); i++)
         highlights[i] = selected[i] ? 1 : 0;
-
-    _scatterPlotWidget->setHighlights(highlights, static_cast<std::int32_t>(selection->indices.size()));
+    qDebug() << _showHighlights;
+    if (_showHighlights)
+        _scatterPlotWidget->setHighlights(highlights, static_cast<std::int32_t>(selection->indices.size()));
 }
 
 std::uint32_t ScatterplotPlugin::getNumberOfPoints() const

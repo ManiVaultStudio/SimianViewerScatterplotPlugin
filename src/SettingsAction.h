@@ -11,6 +11,7 @@
 #include "SelectionAction.h"
 #include "ManualClusteringAction.h"
 #include "MiscellaneousAction.h"
+#include "actions/ToggleAction.h"
 
 #include "actions/WidgetActionStateWidget.h"
 
@@ -96,4 +97,5 @@ protected:
     PlotAction                  _plotAction;
     TriggerAction               _exportAction;
     MiscellaneousAction         _miscellaneousAction;
+    ToggleAction                _showHighlightsAction;
 };
