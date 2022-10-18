@@ -6,13 +6,13 @@
 
 using namespace hdps::gui;
 
-class CurrentDatasetAction : public PluginAction
+class LoadedDatasetsAction : public PluginAction
 {
 protected:
 
     class Widget : public WidgetActionWidget {
     public:
-        Widget(QWidget* parent, CurrentDatasetAction* currentDatasetAction, const std::int32_t& widgetFlags);
+        Widget(QWidget* parent, LoadedDatasetsAction* currentDatasetAction, const std::int32_t& widgetFlags);
     };
 
     QWidget* getWidget(QWidget* parent, const std::int32_t& widgetFlags) override {
@@ -20,10 +20,11 @@ protected:
     };
 
 public:
-    CurrentDatasetAction(ScatterplotPlugin* scatterplotPlugin);
+    LoadedDatasetsAction(ScatterplotPlugin* scatterplotPlugin);
 
 protected:
-    DatasetPickerAction	_datasetPickerAction;
+    DatasetPickerAction	    _positionDatasetPickerAction;
+    DatasetPickerAction     _colorDatasetPickerAction;
 
     friend class Widget;
 };
