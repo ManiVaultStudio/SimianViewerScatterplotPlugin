@@ -2,7 +2,7 @@
 
 #include "PluginAction.h"
 
-#include "CurrentDatasetAction.h"
+#include "LoadedDatasetsAction.h"
 #include "RenderModeAction.h"
 #include "PlotAction.h"
 #include "PositionAction.h"
@@ -86,10 +86,10 @@ public:
     MiscellaneousAction& getMiscellaneousAction() { return _miscellaneousAction; }
 
 protected:
-    CurrentDatasetAction        _currentDatasetAction;
     RenderModeAction            _renderModeAction;
     PositionAction              _positionAction;
     ColoringAction              _coloringAction;
+    LoadedDatasetsAction        _currentDatasetAction;
     SubsetAction                _subsetAction;
     ManualClusteringAction      _manualClusteringAction;
     SelectionAction             _selectionAction;

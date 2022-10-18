@@ -69,6 +69,8 @@ SelectionAction::SelectionAction(ScatterplotPlugin& scatterplotPlugin) :
         _scatterplotPlugin.getScatterplotWidget().setSelectionOutlineColor(color);
     });
 
+    getOverlayColorAction().setText("Color");
+
     const auto updateActionsReadOnly = [this]() -> void {
         _outlineOverrideColorAction.setEnabled(_outlineEnabledAction.isChecked());
         getOverlayColorAction().setEnabled(_outlineEnabledAction.isChecked() && _outlineOverrideColorAction.isChecked());
