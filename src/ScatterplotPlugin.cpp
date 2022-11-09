@@ -464,7 +464,7 @@ void ScatterplotPlugin::loadColors(const Dataset<Clusters>& clusters)
     else
         totalNumPoints = _positionDataset->getFullDataset<Points>()->getNumPoints();
 
-    _positionSourceDataset->getGlobalIndices(globalIndices);
+    _positionDataset->getGlobalIndices(globalIndices);
 
     // Generate color buffer for global and local colors
     std::vector<Vector3f> globalColors(totalNumPoints);
