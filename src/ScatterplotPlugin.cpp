@@ -265,10 +265,15 @@ void ScatterplotPlugin::loadData(const Datasets& datasets)
 
 void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, const QString& name /*= ""*/)
 {
-    auto subsetPoints = fromSourceData ? _positionDataset->getSourceDataset<Points>() : _positionDataset;
-
     // Create the subset
-    auto subset = subsetPoints->createSubsetFromSelection(_positionDataset->getGuiName(), _positionDataset);
+    hdps::Dataset<DatasetImpl> subset;
+
+    if (fromSourceData)
+        // Make subset from the source data, this is not the displayed data, so no restrictions here
+        subset = _positionSourceDataset->createSubsetFromSelection(_positionSourceDataset->getGuiName(), _positionSourceDataset);
+    else
+        // Avoid making a bigger subset than the current data by restricting the selection to the current data
+        subset = _positionDataset->createSubsetFromVisibleSelection(_positionDataset->getGuiName(), _positionDataset);
 
     // Notify others that the subset was added
     _core->notifyDatasetAdded(subset);
