@@ -379,8 +379,12 @@ void PointPlotAction::updateScatterPlotWidgetPointOpacityScalars()
         // Establish point opacity of selected points
         const auto pointOpacitySelectedPoints = std::min(1.0f, opacityMagnitude + opacityOffset);
 
+        // Get selection indices relative to displayed dataset
+        std::vector<uint32_t> localSelectionIndices;
+        positionDataset->getLocalSelectionIndices(localSelectionIndices);
+
         // And selected point opacity for selected points
-        for (const auto& selectionIndex : selectionSet->indices)
+        for (const auto& selectionIndex : localSelectionIndices)
             _pointOpacityScalars[selectionIndex] = pointOpacitySelectedPoints;
     }
 
