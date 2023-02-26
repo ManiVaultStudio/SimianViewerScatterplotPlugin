@@ -6,12 +6,16 @@
 
 using namespace hdps::gui;
 
-DensityPlotAction::DensityPlotAction(ScatterplotPlugin* scatterplotPlugin) :
-    PluginAction(scatterplotPlugin, "Density"),
-    _sigmaAction(this, "Sigma", 0.01, 0.5, DEFAULT_SIGMA, DEFAULT_SIGMA, 3),
+DensityPlotAction::DensityPlotAction(PlotAction* plotAction, ScatterplotPlugin* scatterplotPlugin) :
+    PluginAction(plotAction, scatterplotPlugin, "Density"),
+    _sigmaAction(this, "Sigma", 0.01f, 0.5f, DEFAULT_SIGMA, DEFAULT_SIGMA, 3),
     _continuousUpdatesAction(this, "Live Updates", DEFAULT_CONTINUOUS_UPDATES, DEFAULT_CONTINUOUS_UPDATES)
 {
     setToolTip("Density plot settings");
+    setSerializationName("DensityPlot");
+
+    _sigmaAction.setSerializationName("Sigma");
+    _continuousUpdatesAction.setSerializationName("ContinuousUpdates");
 
     _scatterplotPlugin->getWidget().addAction(&_sigmaAction);
     _scatterplotPlugin->getWidget().addAction(&_continuousUpdatesAction);
@@ -66,6 +70,24 @@ QMenu* DensityPlotAction::getContextMenu()
     addActionToMenu(&_continuousUpdatesAction);
 
     return menu;
+}
+
+void DensityPlotAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    WidgetAction::fromVariantMap(variantMap);
+
+    _sigmaAction.fromParentVariantMap(variantMap);
+    _continuousUpdatesAction.fromParentVariantMap(variantMap);
+}
+
+QVariantMap DensityPlotAction::toVariantMap() const
+{
+    QVariantMap variantMap = WidgetAction::toVariantMap();
+
+    _sigmaAction.insertIntoVariantMap(variantMap);
+    _continuousUpdatesAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }
 
 DensityPlotAction::Widget::Widget(QWidget* parent, DensityPlotAction* densityPlotAction) :

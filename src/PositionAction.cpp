@@ -9,11 +9,15 @@
 using namespace hdps::gui;
 
 PositionAction::PositionAction(ScatterplotPlugin* scatterplotPlugin) :
-    PluginAction(scatterplotPlugin, "Position"),
+    PluginAction(scatterplotPlugin, scatterplotPlugin, "Position"),
     _xDimensionPickerAction(this, "X"),
     _yDimensionPickerAction(this, "Y")
 {
     setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("ruler-combined"));
+    setSerializationName("Position");
+
+    _xDimensionPickerAction.setSerializationName("X");
+    _yDimensionPickerAction.setSerializationName("Y");
 
     // Add actions to scatter plot plugin (for shortcuts)
     _scatterplotPlugin->getWidget().addAction(&_xDimensionPickerAction);
@@ -76,6 +80,24 @@ std::int32_t PositionAction::getDimensionX() const
 std::int32_t PositionAction::getDimensionY() const
 {
     return _yDimensionPickerAction.getCurrentDimensionIndex();
+}
+
+void PositionAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    WidgetAction::fromVariantMap(variantMap);
+
+    _xDimensionPickerAction.fromParentVariantMap(variantMap);
+    _yDimensionPickerAction.fromParentVariantMap(variantMap);
+}
+
+QVariantMap PositionAction::toVariantMap() const
+{
+    QVariantMap variantMap = WidgetAction::toVariantMap();
+
+    _xDimensionPickerAction.insertIntoVariantMap(variantMap);
+    _yDimensionPickerAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }
 
 PositionAction::Widget::Widget(QWidget* parent, PositionAction* positionAction, const std::int32_t& widgetFlags) :

@@ -266,13 +266,18 @@ void ScatterplotPlugin::loadData(const Datasets& datasets)
 
 void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, const QString& name /*= ""*/)
 {
-    auto subsetPoints = fromSourceData ? _positionDataset->getSourceDataset<Points>() : _positionDataset;
-
     // Create the subset
-    auto subset = subsetPoints->createSubsetFromSelection(_positionDataset->getGuiName(), _positionDataset);
+    hdps::Dataset<DatasetImpl> subset;
+
+    if (fromSourceData)
+        // Make subset from the source data, this is not the displayed data, so no restrictions here
+        subset = _positionSourceDataset->createSubsetFromSelection(_positionSourceDataset->getGuiName(), _positionSourceDataset);
+    else
+        // Avoid making a bigger subset than the current data by restricting the selection to the current data
+        subset = _positionDataset->createSubsetFromVisibleSelection(_positionDataset->getGuiName(), _positionDataset);
 
     // Notify others that the subset was added
-    _core->notifyDatasetAdded(subset);
+    events().notifyDatasetAdded(subset);
 
     // And select the subset
     subset->getDataHierarchyItem().select();
@@ -375,7 +380,7 @@ void ScatterplotPlugin::selectPoints()
 
     _positionDataset->setSelectionIndices(targetSelectionIndices);
 
-    _core->notifyDatasetSelectionChanged(_positionDataset->getSourceDataset<Points>());
+    events().notifyDatasetSelectionChanged(_positionDataset->getSourceDataset<Points>());
 }
 
 void ScatterplotPlugin::updateWindowTitle()
@@ -408,6 +413,8 @@ void ScatterplotPlugin::positionDatasetChanged()
     // Set position source dataset reference when the position dataset is derived
     //if (_positionDataset->isDerivedData())
     _positionSourceDataset = _positionDataset->getSourceDataset<Points>();
+
+    _numPoints = _positionDataset->getNumPoints();
 
     // Enable pixel selection if the point positions dataset is valid
     _scatterPlotWidget->getPixelSelectionTool().setEnabled(_positionDataset.isValid());
@@ -465,7 +472,7 @@ void ScatterplotPlugin::loadColors(const Dataset<Clusters>& clusters)
     else
         totalNumPoints = _positionDataset->getFullDataset<Points>()->getNumPoints();
 
-    _positionSourceDataset->getGlobalIndices(globalIndices);
+    _positionDataset->getGlobalIndices(globalIndices);
 
     // Generate color buffer for global and local colors
     std::vector<Vector3f> globalColors(totalNumPoints);
@@ -562,6 +569,24 @@ void ScatterplotPlugin::updateSelection()
         _scatterPlotWidget->setHighlights(highlights, static_cast<std::int32_t>(selection->indices.size()));
 }
 
+void ScatterplotPlugin::fromVariantMap(const QVariantMap& variantMap)
+{
+    ViewPlugin::fromVariantMap(variantMap);
+
+    variantMapMustContain(variantMap, "Settings");
+
+    _settingsAction.fromVariantMap(variantMap["Settings"].toMap());
+}
+
+QVariantMap ScatterplotPlugin::toVariantMap() const
+{
+    QVariantMap variantMap = ViewPlugin::toVariantMap();
+
+    _settingsAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
+}
+
 std::uint32_t ScatterplotPlugin::getNumberOfPoints() const
 {
     if (!_positionDataset.isValid())
@@ -595,19 +620,19 @@ PluginTriggerActions ScatterplotPluginFactory::getPluginTriggerActions(const hdp
     PluginTriggerActions pluginTriggerActions;
 
     const auto getInstance = [this]() -> ScatterplotPlugin* {
-        return dynamic_cast<ScatterplotPlugin*>(Application::core()->requestPlugin(getKind()));
+        return dynamic_cast<ScatterplotPlugin*>(Application::core()->getPluginManager().requestViewPlugin(getKind()));
     };
 
     const auto numberOfDatasets = datasets.count();
 
     if (PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        if (numberOfDatasets >= 1) {
-            auto pluginTriggerAction = createPluginTriggerAction("Scatterplot", "View selected datasets side-by-side in separate scatter plot viewers", datasets, "braille");
+        auto& fontAwesome = Application::getIconFont("FontAwesome");
 
-            connect(pluginTriggerAction, &QAction::triggered, [this, getInstance, datasets]() -> void {
+        if (numberOfDatasets >= 1) {
+            auto pluginTriggerAction = new PluginTriggerAction(const_cast<ScatterplotPluginFactory*>(this), this, "Scatterplot", "View selected datasets side-by-side in separate scatter plot viewers", fontAwesome.getIcon("braille"), [this, getInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
                 for (auto dataset : datasets)
                     getInstance()->loadData(Datasets({ dataset }));
-                });
+            });
 
             pluginTriggerActions << pluginTriggerAction;
         }

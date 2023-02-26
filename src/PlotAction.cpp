@@ -1,4 +1,5 @@
 #include "PlotAction.h"
+#include "ScatterplotPlugin.h"
 #include "ScatterplotWidget.h"
 #include "Application.h"
 
@@ -8,9 +9,9 @@
 using namespace hdps::gui;
 
 PlotAction::PlotAction(ScatterplotPlugin* scatterplotPlugin) :
-    PluginAction(scatterplotPlugin, "Plot"),
-    _pointPlotAction(scatterplotPlugin),
-    _densityPlotAction(scatterplotPlugin)
+    PluginAction(scatterplotPlugin, scatterplotPlugin, "Plot"),
+    _pointPlotAction(this, scatterplotPlugin),
+    _densityPlotAction(this, scatterplotPlugin)
 {
     setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("paint-brush"));
 
@@ -44,6 +45,24 @@ QMenu* PlotAction::getContextMenu()
     }
 
     return new QMenu("Plot");
+}
+
+void PlotAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    WidgetAction::fromVariantMap(variantMap);
+
+    _pointPlotAction.fromParentVariantMap(variantMap);
+    _densityPlotAction.fromParentVariantMap(variantMap);
+}
+
+QVariantMap PlotAction::toVariantMap() const
+{
+    QVariantMap variantMap = WidgetAction::toVariantMap();
+
+    _pointPlotAction.insertIntoVariantMap(variantMap);
+    _densityPlotAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }
 
 PlotAction::Widget::Widget(QWidget* parent, PlotAction* plotAction, const std::int32_t& widgetFlags) :

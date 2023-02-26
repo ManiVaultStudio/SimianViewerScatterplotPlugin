@@ -2,13 +2,15 @@
 #include "ScatterplotPlugin.h"
 #include "PointData.h"
 
+#include <Application.h>
+
 #include <QMenu>
 
 using namespace hdps;
 using namespace hdps::gui;
 
 SubsetAction::SubsetAction(ScatterplotPlugin* scatterplotPlugin) :
-    PluginAction(scatterplotPlugin, "Subset"),
+    PluginAction(scatterplotPlugin, scatterplotPlugin, "Subset"),
     _subsetNameAction(this, "Subset name"),
     _createSubsetAction(this, "Create subset"),
     _sourceDataAction(this, "Source data")

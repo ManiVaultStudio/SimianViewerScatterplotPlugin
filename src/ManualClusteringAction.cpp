@@ -11,7 +11,7 @@ using namespace hdps;
 using namespace hdps::gui;
 
 ManualClusteringAction::ManualClusteringAction(ScatterplotPlugin* scatterplotPlugin) :
-    PluginAction(scatterplotPlugin, "Cluster"),
+    PluginAction(scatterplotPlugin, scatterplotPlugin, "Cluster"),
     _nameAction(this, "Name"),
     _colorAction(this, "Color"),
     _addClusterAction(this, "Add cluster"),
@@ -55,8 +55,7 @@ ManualClusteringAction::ManualClusteringAction(ScatterplotPlugin* scatterplotPlu
         // Add the cluster to the set
         targetClusterDataset->addCluster(cluster);
 
-        // Notify others that the cluster data has changed
-        Application::core()->notifyDatasetChanged(targetClusterDataset);
+        events().notifyDatasetChanged(targetClusterDataset);
 
         // Reset the cluster name input
         _nameAction.reset();
@@ -85,7 +84,7 @@ void ManualClusteringAction::createDefaultClusterDataset()
     const auto defaultClusters = Application::core()->addDataset<Clusters>("Cluster", "Clusters (manual)", _scatterplotPlugin->getPositionDataset());
 
     // Notify others that the default set was added
-    Application::core()->notifyDatasetAdded(defaultClusters);
+    events().notifyDatasetAdded(defaultClusters);
 
     // Update picker
     updateTargetClusterDatasets();

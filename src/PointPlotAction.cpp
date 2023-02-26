@@ -9,17 +9,25 @@
 
 using namespace gui;
 
-PointPlotAction::PointPlotAction(ScatterplotPlugin* scatterplotPlugin) :
-    PluginAction(scatterplotPlugin, "Point"),
-    _sizeAction(scatterplotPlugin, "Point size", 0.0, 100.0, DEFAULT_POINT_SIZE, DEFAULT_POINT_SIZE),
-    _opacityAction(scatterplotPlugin, "Point opacity", 0.0, 100.0, DEFAULT_POINT_OPACITY, DEFAULT_POINT_OPACITY),
+PointPlotAction::PointPlotAction(PlotAction* plotAction, ScatterplotPlugin* scatterplotPlugin) :
+    PluginAction(plotAction, scatterplotPlugin, "Point"),
+    _sizeAction(this, scatterplotPlugin, "Point size", 0.0, 100.0, DEFAULT_POINT_SIZE, DEFAULT_POINT_SIZE),
+    _opacityAction(this, scatterplotPlugin, "Point opacity", 0.0, 100.0, DEFAULT_POINT_OPACITY, DEFAULT_POINT_OPACITY),
     _pointSizeScalars(),
     _pointOpacityScalars(),
     _focusSelection(this, "Focus selection"),
     _lastOpacitySourceIndex(-1)
 {
+    setSerializationName("PointPlot");
+
+    _sizeAction.setSerializationName("SizeScalar");
+    _opacityAction.setSerializationName("OpacityScalar");
+
     _scatterplotPlugin->getWidget().addAction(&_sizeAction);
     _scatterplotPlugin->getWidget().addAction(&_opacityAction);
+
+    _sizeAction.setConnectionPermissionsToNone();
+    _opacityAction.setConnectionPermissionsToNone();
 
     _sizeAction.getMagnitudeAction().setSuffix("px");
     _opacityAction.getMagnitudeAction().setSuffix("%");
@@ -88,8 +96,8 @@ PointPlotAction::PointPlotAction(ScatterplotPlugin* scatterplotPlugin) :
     connect(&_opacityAction, &ScalarAction::scalarRangeChanged, this, &PointPlotAction::updateScatterPlotWidgetPointOpacityScalars);
 
     // Update the point size and opacity scalars when the selection of the position dataset changes
-    //connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, &PointPlotAction::updateScatterPlotWidgetPointSizeScalars);
-    //connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, &PointPlotAction::updateScatterPlotWidgetPointOpacityScalars);
+    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, &PointPlotAction::updateScatterPlotWidgetPointSizeScalars);
+    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, &PointPlotAction::updateScatterPlotWidgetPointOpacityScalars);
 
     // For convenience, set the offset to double the magnitude in case of a selection source
     connect(&_sizeAction, &ScalarAction::sourceSelectionChanged, this, [this](const std::uint32_t& sourceSelectionIndex) {
@@ -379,8 +387,12 @@ void PointPlotAction::updateScatterPlotWidgetPointOpacityScalars()
         // Establish point opacity of selected points
         const auto pointOpacitySelectedPoints = std::min(1.0f, opacityMagnitude + opacityOffset);
 
+        // Get selection indices relative to displayed dataset
+        std::vector<uint32_t> localSelectionIndices;
+        positionDataset->getLocalSelectionIndices(localSelectionIndices);
+
         // And selected point opacity for selected points
-        for (const auto& selectionIndex : selectionSet->indices)
+        for (const auto& selectionIndex : localSelectionIndices)
             _pointOpacityScalars[selectionIndex] = pointOpacitySelectedPoints;
     }
 
@@ -446,6 +458,26 @@ void PointPlotAction::updateScatterPlotWidgetPointOpacityScalars()
 
     // Set scatter plot point size scalars
     _scatterplotPlugin->getScatterplotWidget().setPointOpacityScalars(_pointOpacityScalars);
+}
+
+void PointPlotAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    WidgetAction::fromVariantMap(variantMap);
+
+    _sizeAction.fromParentVariantMap(variantMap);
+    _opacityAction.fromParentVariantMap(variantMap);
+    _focusSelection.fromParentVariantMap(variantMap);
+}
+
+QVariantMap PointPlotAction::toVariantMap() const
+{
+    QVariantMap variantMap = WidgetAction::toVariantMap();
+
+    _sizeAction.insertIntoVariantMap(variantMap);
+    _opacityAction.insertIntoVariantMap(variantMap);
+    _focusSelection.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }
 
 PointPlotAction::Widget::Widget(QWidget* parent, PointPlotAction* pointPlotAction, const std::int32_t& widgetFlags) :

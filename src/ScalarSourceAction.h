@@ -49,16 +49,31 @@ public:
 
     /**
      * Constructor
+     * @param parent Pointer to parent object
      * @param scatterplotPlugin Pointer to scatter plot plugin
      * @param title Title
      */
-    ScalarSourceAction(ScatterplotPlugin* scatterplotPlugin, const QString& title);
+    ScalarSourceAction(QObject* parent, ScatterplotPlugin* scatterplotPlugin, const QString& title);
 
     /** Get the scalar source model */
     ScalarSourceModel& getModel();
 
     /** Update scalar range */
     void updateScalarRange();
+
+public: // Serialization
+
+    /**
+     * Load widget action from variant map
+     * @param Variant map representation of the widget action
+     */
+    void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+     * Save widget action to variant map
+     * @return Variant map representation of the widget action
+     */
+    QVariantMap toVariantMap() const override;
 
 public: // Action getters
 

@@ -47,13 +47,14 @@ public:
 
     /**
      * Constructor
+     * @param parent Pointer to parent object
      * @param scatterplotPlugin Pointer to scatter plot plugin
      * @param minimum Scalar minimum value
      * @param maximum Scalar maximum value
      * @param value Scalar value
      * @param defaultValue Scalar default value
      */
-    ScalarAction(ScatterplotPlugin* scatterplotPlugin, const QString& title, const float& minimum, const float& maximum, const float& value, const float& defaultValue);
+    ScalarAction(QObject* parent, ScatterplotPlugin* scatterplotPlugin, const QString& title, const float& minimum, const float& maximum, const float& value, const float& defaultValue);
 
     /**
      * Add dataset to the model
@@ -88,6 +89,20 @@ public:
     /** Determines whether the scalar source is a dataset */
     bool isSourceDataset() const;
 
+public: // Serialization
+
+    /**
+     * Load widget action from variant map
+     * @param Variant map representation of the widget action
+     */
+    void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+     * Save widget action to variant map
+     * @return Variant map representation of the widget action
+     */
+    QVariantMap toVariantMap() const override;
+
 public: // Action getters
 
     DecimalAction& getMagnitudeAction() { return _magnitudeAction; }
@@ -97,7 +112,7 @@ signals:
 
     /**
      * Signals that the source selection changed
-     * @param sourceIndex Index of the selected source (0 is constant, 1 si selection, above is a dataset)
+     * @param sourceIndex Index of the selected source (0 is constant, 1 is selection, above is a dataset)
      */
     void sourceSelectionChanged(const std::uint32_t& sourceSelectionIndex);
 

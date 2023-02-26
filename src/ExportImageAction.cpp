@@ -44,6 +44,26 @@ ExportImageAction::ExportImageAction(QObject* parent, ScatterplotPlugin& scatter
     _aspectRatio()
 {
     setText("Export");
+    setLabelWidthFixed(100);
+    
+    _dimensionSelectionAction.setConnectionPermissionsToNone();
+    _targetWidthAction.setConnectionPermissionsToNone();
+    _targetHeightAction.setConnectionPermissionsToNone();
+    _lockAspectRatioAction.setConnectionPermissionsToNone();
+    _scaleAction.setConnectionPermissionsToNone();
+    _backgroundColorAction.setConnectionPermissionsToNone();
+    _overrideRangesAction.setConnectionPermissionsToNone();
+    _fixedRangeAction.setConnectionPermissionsToNone();
+    _fileNamePrefixAction.setConnectionPermissionsToNone();
+    _statusAction.setConnectionPermissionsToNone();
+    _outputDirectoryAction.setConnectionPermissionsToNone();
+
+    _targetWidthAction.setEnabled(false);
+    _targetHeightAction.setEnabled(false);
+    _lockAspectRatioAction.setEnabled(false);
+    _scaleAction.setEnabled(false);
+
+    _outputDirectoryAction.setSettingsPrefix(&_scatterplotPlugin, "Screenshot/OutputDirectory");
 
     _dimensionSelectionAction.setObjectName("Dimensions/" + scatterplotPlugin.getPositionDataset()->getGuiName());
 
@@ -266,4 +286,6 @@ void ExportImageAction::updateExportTrigger()
     _exportCancelAction.setTriggerText(0, getNumberOfSelectedDimensions() == 0 ? "Nothing to export" : "Export (" + QString::number(getNumberOfSelectedDimensions()) + ")");
     _exportCancelAction.setTriggerTooltip(0, getNumberOfSelectedDimensions() == 0 ? "There are no images selected to export" : "Export " + QString::number(getNumberOfSelectedDimensions()) + " image" + (getNumberOfSelectedDimensions() >= 2 ? "s" : "") + " to disk");
     _exportCancelAction.setTriggerEnabled(0, mayExport());
+
+    qDebug() << "updateExportTrigger" << mayExport();
 }

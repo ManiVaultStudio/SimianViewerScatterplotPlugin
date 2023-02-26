@@ -6,6 +6,8 @@
 
 using namespace hdps::gui;
 
+class PlotAction;
+
 class DensityPlotAction : public PluginAction
 {
 protected:
@@ -19,15 +21,29 @@ protected:
     };
 
 public:
-    DensityPlotAction(ScatterplotPlugin* scatterplotPlugin);
+    DensityPlotAction(PlotAction* plotAction, ScatterplotPlugin* scatterplotPlugin);
 
     QMenu* getContextMenu();
+
+public: // Serialization
+
+    /**
+     * Load widget action from variant map
+     * @param Variant map representation of the widget action
+     */
+    void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+     * Save widget action to variant map
+     * @return Variant map representation of the widget action
+     */
+    QVariantMap toVariantMap() const override;
 
 protected:
     DecimalAction       _sigmaAction;
     ToggleAction        _continuousUpdatesAction;
 
-    static constexpr double DEFAULT_SIGMA = 0.15;
+    static constexpr double DEFAULT_SIGMA = 0.15f;
     static constexpr bool DEFAULT_CONTINUOUS_UPDATES = true;
 
     friend class Widget;

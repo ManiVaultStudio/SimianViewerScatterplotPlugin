@@ -8,12 +8,15 @@
 
 using namespace hdps::gui;
 
-ScalarAction::ScalarAction(ScatterplotPlugin* scatterplotPlugin, const QString& title, const float& minimum, const float& maximum, const float& value, const float& defaultValue) :
-    PluginAction(scatterplotPlugin, "Scalar"),
+ScalarAction::ScalarAction(QObject* parent, ScatterplotPlugin* scatterplotPlugin, const QString& title, const float& minimum, const float& maximum, const float& value, const float& defaultValue) :
+    PluginAction(parent, scatterplotPlugin, "Scalar"),
     _magnitudeAction(this, title, minimum, maximum, value, defaultValue),
-    _sourceAction(scatterplotPlugin, title)
+    _sourceAction(this, scatterplotPlugin, QString("%1 source").arg(title))
 {
     setText(title);
+    setSerializationName("Scalar");
+
+    _magnitudeAction.setSerializationName("Magnitude");
 
     _scatterplotPlugin->getWidget().addAction(&_sourceAction);
 
@@ -118,6 +121,24 @@ bool ScalarAction::isSourceSelection() const
 bool ScalarAction::isSourceDataset() const
 {
     return _sourceAction.getPickerAction().getCurrentIndex() >= ScalarSourceModel::DefaultRow::DatasetStart;
+}
+
+void ScalarAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    WidgetAction::fromVariantMap(variantMap);
+
+    _magnitudeAction.fromParentVariantMap(variantMap);
+    _sourceAction.fromParentVariantMap(variantMap);
+}
+
+QVariantMap ScalarAction::toVariantMap() const
+{
+    QVariantMap variantMap = WidgetAction::toVariantMap();
+
+    _magnitudeAction.insertIntoVariantMap(variantMap);
+    _sourceAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }
 
 ScalarAction::Widget::Widget(QWidget* parent, ScalarAction* scalarAction) :
