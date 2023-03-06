@@ -18,7 +18,8 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
     _colorByAction(this, "Color by"),
     _constantColorAction(this, "Constant color", DEFAULT_CONSTANT_COLOR, DEFAULT_CONSTANT_COLOR),
     _dimensionAction(this, "Dim"),
-    _colorMapAction(this, "Color map")
+    _colorMapAction(this, "Color map"),
+    _colorMap2DAction(this, "Color map 2D", ColorMap::Type::TwoDimensional, "example_c", "example_c")
 {
     setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("palette"));
     setSerializationName("Coloring");
@@ -27,12 +28,16 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
     _constantColorAction.setSerializationName("ConstantColor");
     _dimensionAction.setSerializationName("ColorDimension");
     _colorMapAction.setSerializationName("ColorMap");
+    _colorMap2DAction.setSerializationName("ColorMap 2D");
 
     _scatterplotPlugin->getWidget().addAction(&_colorByAction);
     _scatterplotPlugin->getWidget().addAction(&_dimensionAction);
 
     _colorByAction.setCustomModel(&_colorByModel);
     _colorByAction.setToolTip("Color by");
+
+    _colorMapAction.setVisible(false);
+    _colorMap2DAction.setVisible(false);
 
     // Update dataset picker when the position dataset changes
     connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, [this]() {
@@ -87,6 +92,10 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
         // Set color by constant action visibility depending on the coloring type
         _constantColorAction.setVisible(_colorByAction.getCurrentIndex() == 0);
 
+        // Set 1D/2D colormaps visible depending on the coloring type
+        _colorMap2DAction.setVisible(_colorByAction.getCurrentIndex() == 1);
+        _colorMapAction.setVisible(_colorByAction.getCurrentIndex() > 1);
+
         // Get smart pointer to current color dataset
         const auto currentColorDataset = getCurrentColorDataset();
 
@@ -132,6 +141,7 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
     // Update scatter plot widget color map when actions change
     connect(&_constantColorAction, &ColorAction::colorChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
     connect(&_colorMapAction, &ColorMapAction::imageChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
+    connect(&_colorMap2DAction, &ColorMapAction::imageChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
     connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::coloringModeChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
     connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
 
@@ -205,7 +215,7 @@ Dataset<DatasetImpl> ColoringAction::getCurrentColorDataset() const
     const auto colorByIndex = _colorByAction.getCurrentIndex();
 
     // Only proceed if we have a valid color dataset row index
-    if (colorByIndex < 1)
+    if (colorByIndex < 2)
         return Dataset<DatasetImpl>();
 
     return _colorByModel.getDataset(colorByIndex);
@@ -255,7 +265,7 @@ void ColoringAction::updateColorByActionOptions()
 void ColoringAction::updateScatterPlotWidgetColors()
 {
     // Only upload colors to scatter plot widget in data coloring mode
-    if (_colorByAction.getCurrentIndex() == 0)
+    if (_colorByAction.getCurrentIndex() <= 1)
         return;
 
     // Get smart pointer to current color dataset
@@ -311,6 +321,13 @@ void ColoringAction::updateScatterplotWidgetColorMap()
                 getScatterplotWidget().setColorMap(colorPixmap.toImage());
                 getScatterplotWidget().setScalarEffect(PointEffect::Color);
                 getScatterplotWidget().setColoringMode(ScatterplotWidget::ColoringMode::Constant);
+            }
+            else if (_colorByAction.getCurrentIndex() == 1) {
+                
+                // Update the scatter plot widget with the 2D color map
+                getScatterplotWidget().setColorMap(_colorMap2DAction.getColorMapImage());
+                getScatterplotWidget().setScalarEffect(PointEffect::Color2D);
+                getScatterplotWidget().setColoringMode(ScatterplotWidget::ColoringMode::Scatter);
             }
             else {
 
@@ -369,6 +386,7 @@ bool ColoringAction::shouldEnableColorMap() const
 void ColoringAction::updateColorMapActionReadOnly()
 {
     _colorMapAction.setEnabled(shouldEnableColorMap());
+    _colorMap2DAction.setEnabled(shouldEnableColorMap());
 }
 
 void ColoringAction::fromVariantMap(const QVariantMap& variantMap)
@@ -378,6 +396,7 @@ void ColoringAction::fromVariantMap(const QVariantMap& variantMap)
     _constantColorAction.fromParentVariantMap(variantMap);
     _dimensionAction.fromParentVariantMap(variantMap);
     _colorMapAction.fromParentVariantMap(variantMap);
+    _colorMap2DAction.fromParentVariantMap(variantMap);
     _colorByAction.fromParentVariantMap(variantMap);
 }
 
@@ -389,6 +408,7 @@ QVariantMap ColoringAction::toVariantMap() const
     _constantColorAction.insertIntoVariantMap(variantMap);
     _dimensionAction.insertIntoVariantMap(variantMap);
     _colorMapAction.insertIntoVariantMap(variantMap);
+    _colorMap2DAction.insertIntoVariantMap(variantMap);
 
     return variantMap;
 }
