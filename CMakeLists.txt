@@ -75,13 +75,8 @@ set(Models
     src/ScalarSourceModel.cpp
 )
 
-set(SHADERS
-    res/shaders/SelectionTool.frag
-    res/shaders/SelectionTool.vert
-)
 
 set(AUX
-    res/Resources.qrc
     src/ScatterplotPlugin.json
 )
 
@@ -91,7 +86,6 @@ source_group(Plugin FILES ${PLUGIN})
 source_group(UI FILES ${UI})
 source_group(Actions FILES ${Actions})
 source_group(Models FILES ${Models})
-source_group(Shaders FILES ${SHADERS})
 source_group(Aux FILES ${AUX})
 
 include_directories("${INSTALL_DIR}/$<CONFIGURATION>/include/")
