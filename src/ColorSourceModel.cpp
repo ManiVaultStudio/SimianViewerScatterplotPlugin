@@ -24,8 +24,12 @@ int ColorSourceModel::rowIndex(const Dataset<DatasetImpl>& dataset) const
     // Only proceed if we have a valid dataset
     if (!dataset.isValid())
         return -1;
+
+    if (!_datasets.contains(dataset))
+        return -1;
+
     // Return the index of the dataset
-    return _datasets.indexOf(dataset) + 1;
+    return _datasets.indexOf(dataset) + 2;
 }
 
 int ColorSourceModel::columnCount(const QModelIndex& parent /*= QModelIndex()*/) const

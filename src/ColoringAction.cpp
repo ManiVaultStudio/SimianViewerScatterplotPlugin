@@ -206,7 +206,7 @@ void ColoringAction::addColorDataset(const Dataset<DatasetImpl>& colorDataset)
 
 bool ColoringAction::hasColorDataset(const Dataset<DatasetImpl>& colorDataset) const
 {
-    return _colorByModel.rowIndex(colorDataset);
+    return _colorByModel.rowIndex(colorDataset) >= 0;
 }
 
 Dataset<DatasetImpl> ColoringAction::getCurrentColorDataset() const
