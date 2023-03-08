@@ -453,6 +453,8 @@ void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uin
     _scatterPlotWidget->setScalars(scalars);
     _scatterPlotWidget->setScalarEffect(PointEffect::Color);
 
+    _settingsAction.getColoringAction().updateColorMapActionScalarRange();
+
     // Render
     getWidget().update();
 }

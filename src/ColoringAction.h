@@ -142,4 +142,5 @@ protected:
     static const QColor DEFAULT_CONSTANT_COLOR;
 
     friend class Widget;
+    friend class ScatterplotPlugin;
 };
