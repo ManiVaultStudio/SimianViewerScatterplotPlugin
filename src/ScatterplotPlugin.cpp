@@ -206,6 +206,8 @@ void ScatterplotPlugin::init()
     bottomToolbarLayout->setContentsMargins(0, 0, 0, 0);
     bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createLabelWidget(&getWidget()));
     bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createWidget(&getWidget()));
+    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMap2DAction().createLabelWidget(&getWidget()));
+    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMap2DAction().createWidget(&getWidget()));
     bottomToolbarLayout->addWidget(_settingsAction.getPlotAction().getPointPlotAction().getFocusSelection().createWidget(&getWidget()));
     bottomToolbarLayout->addStretch(1);
     bottomToolbarLayout->addWidget(_settingsAction.getExportAction().createWidget(&getWidget()));
@@ -451,6 +453,8 @@ void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uin
     // Assign scalars and scalar effect
     _scatterPlotWidget->setScalars(scalars);
     _scatterPlotWidget->setScalarEffect(PointEffect::Color);
+
+    _settingsAction.getColoringAction().updateColorMapActionScalarRange();
 
     // Render
     getWidget().update();
