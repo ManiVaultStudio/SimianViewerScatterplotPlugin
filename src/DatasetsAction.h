@@ -1,22 +1,13 @@
 #pragma once
 
-#include <actions/VerticalGroupAction.h>
-
-#include "PointPlotAction.h"
-#include "DensityPlotAction.h"
-
-class ScatterplotPlugin;
+#include <actions/GroupAction.h>
+#include <actions/DatasetPickerAction.h>
 
 using namespace hdps::gui;
 
-/**
- * Plot action class
- *
- * Action class for configuring plot settings
- *
- * @author Thomas Kroes
- */
-class PlotAction : public VerticalGroupAction
+class ScatterplotPlugin;
+
+class DatasetsAction : public GroupAction
 {
     Q_OBJECT
 
@@ -27,19 +18,7 @@ public:
      * @param parent Pointer to parent object
      * @param title Title of the action
      */
-    Q_INVOKABLE PlotAction(QObject* parent, const QString& title);
-
-    /**
-     * Initialize the selection action with \p scatterplotPlugin
-     * @param scatterplotPlugin Pointer to scatterplot plugin
-     */
-    void initialize(ScatterplotPlugin* scatterplotPlugin);
-
-    /**
-     * Get action context menu
-     * @return Pointer to menu
-     */
-    QMenu* getContextMenu();
+    Q_INVOKABLE DatasetsAction(QObject* parent, const QString& title);
 
 protected: // Linking
 
@@ -72,17 +51,17 @@ public: // Serialization
 
 public: // Action getters
 
-    PointPlotAction& getPointPlotAction() { return _pointPlotAction; }
-    DensityPlotAction& getDensityPlotAction() { return _densityPlotAction; }
+    DatasetPickerAction& getPositionDatasetPickerAction() { return _positionDatasetPickerAction; }
+    DatasetPickerAction& getColorDatasetPickerAction() { return _colorDatasetPickerAction; }
 
 private:
-    ScatterplotPlugin*  _scatterplotPlugin;     /** Pointer to scatterplot plugin */
-    PointPlotAction     _pointPlotAction;       /** Point plot action */
-    DensityPlotAction   _densityPlotAction;     /** Density plot action */
+    ScatterplotPlugin*      _scatterplotPlugin;                 /** Pointer to scatter plot plugin */
+    DatasetPickerAction	    _positionDatasetPickerAction;       /** Dataset picker action for position dataset */
+    DatasetPickerAction     _colorDatasetPickerAction;          /** Dataset picker action for color dataset */
 
     friend class hdps::AbstractActionsManager;
 };
 
-Q_DECLARE_METATYPE(PlotAction)
+Q_DECLARE_METATYPE(DatasetsAction)
 
-inline const auto PointPlotActionMetaTypeId = qRegisterMetaType<PlotAction*>("PlotAction");
+inline const auto datasetsActionMetaTypeId = qRegisterMetaType<DatasetsAction*>("DatasetsAction");

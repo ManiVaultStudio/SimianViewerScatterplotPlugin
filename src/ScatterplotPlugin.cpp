@@ -16,6 +16,8 @@
 
 #include <actions/PluginTriggerAction.h>
 
+#include <DatasetsMimeData.h>
+
 #include <QtCore>
 #include <QApplication>
 #include <QDebug>
@@ -42,15 +44,52 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _numPoints(0),
     _scatterPlotWidget(new ScatterplotWidget()),
     _dropWidget(nullptr),
-    _settingsAction(this),
-    _selectPointsTimer(),
-    _showHighlights(true)
+    _settingsAction(this, "Settings"),
+    _primaryToolbarAction(this, "Primary Toolbar"),
+    _secondaryToolbarAction(this, "Secondary Toolbar"),
+    _selectPointsTimer()
 {
     setObjectName("Scatterplot");
 
     _dropWidget = new DropWidget(_scatterPlotWidget);
 
     getWidget().setFocusPolicy(Qt::ClickFocus);
+
+    _primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getRenderModeAction(), 3, GroupAction::Horizontal);
+    _primaryToolbarAction.addAction(&_settingsAction.getPositionAction(), 1, GroupAction::Horizontal);
+    _primaryToolbarAction.addAction(&_settingsAction.getPlotAction(), 2, GroupAction::Horizontal);
+    _primaryToolbarAction.addAction(&_settingsAction.getColoringAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getSubsetAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getClusteringAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getSelectionAction());
+
+    _secondaryToolbarAction.addAction(&_settingsAction.getColoringAction().getColorMap1DAction(), 1);
+
+    auto focusSelectionAction = new ToggleAction(this, "Focus selection");
+
+    focusSelectionAction->setIcon(Application::getIconFont("FontAwesome").getIcon("mouse-pointer"));
+
+    connect(focusSelectionAction, &ToggleAction::toggled, this, [this](bool toggled) -> void {
+        _settingsAction.getPlotAction().getPointPlotAction().getFocusSelection().setChecked(toggled);
+    });
+
+    connect(&_settingsAction.getPlotAction().getPointPlotAction().getFocusSelection(), &ToggleAction::toggled, this, [this, focusSelectionAction](bool toggled) -> void {
+        focusSelectionAction->setChecked(toggled);
+    });
+
+    const auto updateReadOnly = [this, focusSelectionAction]() {
+        focusSelectionAction->setEnabled(getScatterplotWidget().getRenderMode() == ScatterplotWidget::SCATTERPLOT && _positionDataset.isValid());
+    };
+
+    updateReadOnly();
+
+    connect(_scatterPlotWidget, &ScatterplotWidget::renderModeChanged, this, updateReadOnly);
+    connect(&_positionDataset, &Dataset<Points>::changed, this, updateReadOnly);
+
+    _secondaryToolbarAction.addAction(focusSelectionAction, 2);
+    _secondaryToolbarAction.addAction(&_settingsAction.getExportAction());
+    _secondaryToolbarAction.addAction(&_settingsAction.getMiscellaneousAction());
 
     connect(_scatterPlotWidget, &ScatterplotWidget::customContextMenuRequested, this, [this](const QPoint& point) {
         if (!_positionDataset.isValid())
@@ -69,16 +108,19 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
         DropWidget::DropRegions dropRegions;
 
-        const auto mimeText = mimeData->text();
-        const auto tokens = mimeText.split("\n");
+        const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
 
-        if (tokens.count() == 1)
+        if (datasetsMimeData == nullptr)
             return dropRegions;
 
-        const auto datasetGuiName = tokens[0];
-        const auto datasetId = tokens[1];
-        const auto dataType = DataType(tokens[2]);
-        const auto dataTypes = DataTypes({ PointType , ColorType, ClusterType });
+        if (datasetsMimeData->getDatasets().count() > 1)
+            return dropRegions;
+
+        const auto dataset          = datasetsMimeData->getDatasets().first();
+        const auto datasetGuiName   = dataset->text();
+        const auto datasetId        = dataset->getId();
+        const auto dataType         = dataset->getDataType();
+        const auto dataTypes        = DataTypes({ PointType , ColorType, ClusterType });
 
         // Check if the data type can be dropped
         if (!dataTypes.contains(dataType))
@@ -112,19 +154,19 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
                 if (candidateDataset->getNumPoints() == _positionDataset->getNumPoints()) {
 
                     // The number of points is equal, so offer the option to use the points dataset as source for points colors
-                    dropRegions << new DropWidget::DropRegion(this, "Point color", QString("Colorize %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "palette", true, [this, candidateDataset]() {
+                    dropRegions << new DropWidget::DropRegion(this, "Point color", QString("Colorize %1 points with %2").arg(_positionDataset->text(), candidateDataset->text()), "palette", true, [this, candidateDataset]() {
                         _settingsAction.getColoringAction().addColorDataset(candidateDataset);
                         _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
                         });
 
                     // The number of points is equal, so offer the option to use the points dataset as source for points size
-                    dropRegions << new DropWidget::DropRegion(this, "Point size", QString("Size %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "ruler-horizontal", true, [this, candidateDataset]() {
+                    dropRegions << new DropWidget::DropRegion(this, "Point size", QString("Size %1 points with %2").arg(_positionDataset->text(), candidateDataset->text()), "ruler-horizontal", true, [this, candidateDataset]() {
                         _settingsAction.getPlotAction().getPointPlotAction().addPointSizeDataset(candidateDataset);
                         _settingsAction.getPlotAction().getPointPlotAction().getSizeAction().setCurrentDataset(candidateDataset);
                         });
 
                     // The number of points is equal, so offer the option to use the points dataset as source for points opacity
-                    dropRegions << new DropWidget::DropRegion(this, "Point opacity", QString("Set %1 points opacity with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "brush", true, [this, candidateDataset]() {
+                    dropRegions << new DropWidget::DropRegion(this, "Point opacity", QString("Set %1 points opacity with %2").arg(_positionDataset->text(), candidateDataset->text()), "brush", true, [this, candidateDataset]() {
                         _settingsAction.getPlotAction().getPointPlotAction().addPointOpacityDataset(candidateDataset);
                         _settingsAction.getPlotAction().getPointPlotAction().getOpacityAction().setCurrentDataset(candidateDataset);
                         });
@@ -139,7 +181,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
             auto candidateDataset = _core->requestDataset<Clusters>(datasetId);
 
             // Establish drop region description
-            const auto description = QString("Color points by %1").arg(candidateDataset->getGuiName());
+            const auto description = QString("Color points by %1").arg(candidateDataset->text());
 
             // Only allow user to color by clusters when there is a positions dataset loaded
             if (_positionDataset.isValid()) {
@@ -194,26 +236,9 @@ void ScatterplotPlugin::init()
 
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addWidget(_settingsAction.createWidget(&getWidget()));
+    layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
     layout->addWidget(_scatterPlotWidget, 100);
-
-    auto bottomToolbarWidget = new QWidget();
-    auto bottomToolbarLayout = new QHBoxLayout();
-
-    bottomToolbarWidget->setAutoFillBackground(true);
-    bottomToolbarWidget->setLayout(bottomToolbarLayout);
-
-    bottomToolbarLayout->setContentsMargins(0, 0, 0, 0);
-    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createLabelWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMap2DAction().createLabelWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMap2DAction().createWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getPlotAction().getPointPlotAction().getFocusSelection().createWidget(&getWidget()));
-    bottomToolbarLayout->addStretch(1);
-    bottomToolbarLayout->addWidget(_settingsAction.getExportAction().createWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getMiscellaneousAction().createCollapsedWidget(&getWidget()));
-
-    layout->addWidget(bottomToolbarWidget, 1);
+    layout->addWidget(_secondaryToolbarAction.createWidget(&getWidget()));
 
     getWidget().setLayout(layout);
 
@@ -237,20 +262,9 @@ void ScatterplotPlugin::init()
         selectPoints();
     });
 
-    // Load points when the pointer to the position dataset changes
     connect(&_positionDataset, &Dataset<Points>::changed, this, &ScatterplotPlugin::positionDatasetChanged);
-
-    // Update points when the position dataset data changes
     connect(&_positionDataset, &Dataset<Points>::dataChanged, this, &ScatterplotPlugin::updateData);
-
-    // Update point selection when the position dataset data changes
     connect(&_positionDataset, &Dataset<Points>::dataSelectionChanged, this, &ScatterplotPlugin::updateSelection);
-
-    // Update the window title when the GUI name of the position dataset changes
-    connect(&_positionDataset, &Dataset<Points>::dataGuiNameChanged, this, &ScatterplotPlugin::updateWindowTitle);
-
-    // Do an initial update of the window title
-    updateWindowTitle();
 }
 
 void ScatterplotPlugin::loadData(const Datasets& datasets)
@@ -273,10 +287,10 @@ void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, con
 
     if (fromSourceData)
         // Make subset from the source data, this is not the displayed data, so no restrictions here
-        subset = _positionSourceDataset->createSubsetFromSelection(_positionSourceDataset->getGuiName(), _positionSourceDataset);
+        subset = _positionSourceDataset->createSubsetFromSelection(name, _positionSourceDataset);
     else
         // Avoid making a bigger subset than the current data by restricting the selection to the current data
-        subset = _positionDataset->createSubsetFromVisibleSelection(_positionDataset->getGuiName(), _positionDataset);
+        subset = _positionDataset->createSubsetFromVisibleSelection(name, _positionDataset);
 
     // Notify others that the subset was added
     events().notifyDatasetAdded(subset);
@@ -328,7 +342,7 @@ void ScatterplotPlugin::selectPoints()
     }
 
     // Selection should be subtracted when the selection process was aborted by the user (e.g. by pressing the escape key)
-    const auto selectionModifier = _scatterPlotWidget->getPixelSelectionTool().isAborted() ? PixelSelectionModifierType::Remove : _scatterPlotWidget->getPixelSelectionTool().getModifier();
+    const auto selectionModifier = _scatterPlotWidget->getPixelSelectionTool().isAborted() ? PixelSelectionModifierType::Subtract : _scatterPlotWidget->getPixelSelectionTool().getModifier();
 
     switch (selectionModifier)
     {
@@ -336,7 +350,7 @@ void ScatterplotPlugin::selectPoints()
             break;
 
         case PixelSelectionModifierType::Add:
-        case PixelSelectionModifierType::Remove:
+        case PixelSelectionModifierType::Subtract:
         {
             // Get reference to the indices of the selection set
             auto& selectionSetIndices = selectionSet->indices;
@@ -357,7 +371,7 @@ void ScatterplotPlugin::selectPoints()
             }
 
             // Remove points from the current selection
-            case PixelSelectionModifierType::Remove:
+            case PixelSelectionModifierType::Subtract:
             {
                 // Remove indices from the set 
                 for (const auto& targetIndex : targetSelectionIndices)
@@ -382,15 +396,7 @@ void ScatterplotPlugin::selectPoints()
 
     _positionDataset->setSelectionIndices(targetSelectionIndices);
 
-    events().notifyDatasetSelectionChanged(_positionDataset->getSourceDataset<Points>());
-}
-
-void ScatterplotPlugin::updateWindowTitle()
-{
-    if (!_positionDataset.isValid())
-        getWidget().setWindowTitle(getGuiName());
-    else
-        getWidget().setWindowTitle(QString("%1: %2").arg(getGuiName(), _positionDataset->getDataHierarchyItem().getFullPathName()));
+    events().notifyDatasetDataSelectionChanged(_positionDataset->getSourceDataset<Points>());
 }
 
 Dataset<Points>& ScatterplotPlugin::getPositionDataset()
@@ -405,7 +411,6 @@ Dataset<Points>& ScatterplotPlugin::getPositionSourceDataset()
 
 void ScatterplotPlugin::positionDatasetChanged()
 {
-    // Only proceed if we have a valid position dataset
     if (!_positionDataset.isValid())
         return;
 
@@ -418,17 +423,11 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     _numPoints = _positionDataset->getNumPoints();
 
-    // Enable pixel selection if the point positions dataset is valid
     _scatterPlotWidget->getPixelSelectionTool().setEnabled(_positionDataset.isValid());
 
-    // Do not show the drop indicator if there is a valid point positions dataset
     _dropWidget->setShowDropIndicator(!_positionDataset.isValid());
 
-    // Update positions data
     updateData();
-
-    // Update the window title to reflect the position dataset change
-    updateWindowTitle();
 }
 
 void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uint32_t& dimensionIndex)
@@ -569,8 +568,7 @@ void ScatterplotPlugin::updateSelection()
     for (int i = 0; i < selected.size(); i++)
         highlights[i] = selected[i] ? 1 : 0;
 
-    if (_showHighlights)
-        _scatterPlotWidget->setHighlights(highlights, static_cast<std::int32_t>(selection->indices.size()));
+    _scatterPlotWidget->setHighlights(highlights, static_cast<std::int32_t>(selection->indices.size()));
 }
 
 void ScatterplotPlugin::fromVariantMap(const QVariantMap& variantMap)

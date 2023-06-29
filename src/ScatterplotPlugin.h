@@ -3,7 +3,9 @@
 #include <ViewPlugin.h>
 
 #include <util/PixelSelectionTool.h>
+
 #include <actions/TriggerAction.h>
+#include <actions/HorizontalToolbarAction.h>
 
 #include "Common.h"
 
@@ -86,19 +88,12 @@ public: // Miscellaneous
     /** Use the pixel selection tool to select data points */
     void selectPoints();
 
-protected:
-
-    /** Updates the window title (displays the name of the view and the GUI name of the loaded points dataset) */
-    void updateWindowTitle();
-
 public:
 
     /** Get reference to the scatter plot widget */
     ScatterplotWidget& getScatterplotWidget();
 
     SettingsAction& getSettingsAction() { return _settingsAction; }
-
-    bool& getHighlightBool() { return _showHighlights; }
 
 private:
     void updateData();
@@ -125,14 +120,15 @@ private:
     std::vector<hdps::Vector2f>     _positions;                 /** Point positions */
     unsigned int                    _numPoints;                 /** Number of point positions */
     QTimer                          _selectPointsTimer;         /** Timer to limit the refresh rate of selection updates */
-    bool                            _showHighlights;
 
     static const std::int32_t LAZY_UPDATE_INTERVAL = 2;
 
 protected:
-    ScatterplotWidget* _scatterPlotWidget;
-    hdps::gui::DropWidget* _dropWidget;
-    SettingsAction              _settingsAction;
+    ScatterplotWidget*          _scatterPlotWidget;         /** THe visualization widget */
+    hdps::gui::DropWidget*      _dropWidget;                /** Widget for dropping datasets */
+    SettingsAction              _settingsAction;            /** Group action for all settings */
+    HorizontalToolbarAction     _primaryToolbarAction;      /** Horizontal toolbar for primary content */
+    HorizontalToolbarAction     _secondaryToolbarAction;    /** Secondary toolbar for secondary content */
 };
 
 // =============================================================================

@@ -29,8 +29,6 @@ set(PLUGIN
 set(UI
     src/ScatterplotWidget.h
     src/ScatterplotWidget.cpp
-    src/ExportImageDialog.h
-    src/ExportImageDialog.cpp
 )
 
 set(Actions
@@ -38,14 +36,12 @@ set(Actions
     src/ColoringAction.cpp
     src/DensityPlotAction.h
     src/DensityPlotAction.cpp
-    src/ManualClusteringAction.h
-    src/ManualClusteringAction.cpp
+    src/ClusteringAction.h
+    src/ClusteringAction.cpp
     src/MiscellaneousAction.h
     src/MiscellaneousAction.cpp
     src/PlotAction.h
     src/PlotAction.cpp
-    src/PluginAction.h
-    src/PluginAction.cpp
     src/PointPlotAction.h
     src/PointPlotAction.cpp
     src/PositionAction.h
@@ -62,10 +58,10 @@ set(Actions
     src/SettingsAction.cpp
     src/SubsetAction.h
     src/SubsetAction.cpp
-    src/ExportImageAction.h
-    src/ExportImageAction.cpp
-    src/LoadedDatasetsAction.h
-    src/LoadedDatasetsAction.cpp
+    src/ExportAction.h
+    src/ExportAction.cpp
+    src/DatasetsAction.h
+    src/DatasetsAction.cpp
 )
 
 set(Models
@@ -74,7 +70,6 @@ set(Models
     src/ScalarSourceModel.h
     src/ScalarSourceModel.cpp
 )
-
 
 set(AUX
     src/ScatterplotPlugin.json
@@ -93,6 +88,8 @@ add_library(${PROJECT} SHARED ${SOURCES} ${SHADERS} ${AUX})
 target_include_directories(${PROJECT} PRIVATE "${INSTALL_DIR}/$<CONFIGURATION>/include/")
 
 target_compile_features(${PROJECT} PRIVATE cxx_std_17)
+
+set(SPP_HEADERS)
 
 set(HDPS_LINK_PATH "${INSTALL_DIR}/$<CONFIGURATION>/lib")
 set(PLUGIN_LINK_PATH "${INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
