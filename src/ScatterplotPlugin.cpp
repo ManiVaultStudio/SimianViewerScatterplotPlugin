@@ -577,6 +577,8 @@ void ScatterplotPlugin::fromVariantMap(const QVariantMap& variantMap)
 
     variantMapMustContain(variantMap, "Settings");
 
+    _primaryToolbarAction.fromParentVariantMap(variantMap);
+    _secondaryToolbarAction.fromParentVariantMap(variantMap);
     _settingsAction.fromVariantMap(variantMap["Settings"].toMap());
 }
 
@@ -584,6 +586,8 @@ QVariantMap ScatterplotPlugin::toVariantMap() const
 {
     QVariantMap variantMap = ViewPlugin::toVariantMap();
 
+    _primaryToolbarAction.insertIntoVariantMap(variantMap);
+    _secondaryToolbarAction.insertIntoVariantMap(variantMap);
     _settingsAction.insertIntoVariantMap(variantMap);
 
     return variantMap;
