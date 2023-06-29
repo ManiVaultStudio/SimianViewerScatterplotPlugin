@@ -21,7 +21,6 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     _miscellaneousAction(this, "Miscellaneous"),
     _datasetsAction(this, "Datasets")
 {
-    setText("Settings");
     setConnectionPermissionsToForceNone();
 
     _renderModeAction.initialize(_scatterplotPlugin);

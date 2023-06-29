@@ -21,7 +21,6 @@ ClusteringAction::ClusteringAction(QObject* parent, const QString& title) :
     _clusterDatasetWizardAction(this, "Create cluster dataset"),
     _clusterDatasetAction(this, "Target clusters dataset")
 {
-    setText("Manual clustering");
     setIcon(Application::getIconFont("FontAwesome").getIcon("th-large"));
     setConnectionPermissionsToForceNone();
     setConfigurationFlag(WidgetAction::ConfigurationFlag::ForceCollapsedInGroup);

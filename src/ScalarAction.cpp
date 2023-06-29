@@ -11,7 +11,6 @@ ScalarAction::ScalarAction(QObject* parent, const QString& title, const float& m
     _magnitudeAction(this, title, minimum, maximum, value),
     _sourceAction(this, QString("%1 source").arg(title))
 {
-    setText(title);
     setDefaultWidgetFlags(GroupAction::Horizontal);
     setShowLabels(false);
 
