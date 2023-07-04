@@ -321,7 +321,7 @@ void ColoringAction::updateColorMapActionsReadOnly()
 {
     const auto currentIndex = _colorByAction.getCurrentIndex();
 
-    _colorMap1DAction.setEnabled(shouldEnableColorMap() && (currentIndex == 2));
+    _colorMap1DAction.setEnabled(shouldEnableColorMap() && (currentIndex >= 2));
     _colorMap2DAction.setEnabled(shouldEnableColorMap() && (currentIndex == 1));
 }
 
