@@ -29,6 +29,10 @@ set(PLUGIN
     src/ScatterplotPlugin.cpp
 )
 
+set(PLUGIN_MOC_HEADERS
+    src/ScatterplotPlugin.h
+)
+
 set(UI
     src/ScatterplotWidget.h
     src/ScatterplotWidget.cpp
@@ -87,6 +91,9 @@ source_group(Models FILES ${Models})
 source_group(Aux FILES ${AUX})
 
 add_library(${PROJECT} SHARED ${SOURCES} ${SHADERS} ${AUX})
+
+qt_wrap_cpp(SCATTERPLOT_MOC ${PLUGIN_MOC_HEADERS} TARGET ${PROJECT})
+target_sources(${PROJECT} PRIVATE ${SCATTERPLOT_MOC})
 
 target_include_directories(${PROJECT} PRIVATE "${INSTALL_DIR}/$<CONFIGURATION>/include/")
 
