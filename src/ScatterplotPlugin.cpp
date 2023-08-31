@@ -60,7 +60,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
         _selectedCrossSpeciesCluster.publish("GlobalSelectedCrossspeciesCluster");
         _scatterplotColorControlAction.publish("GlobalScatterplotColorControl");
     }
-    getWidget().setFocusPolicy(Qt::ClickFocus);
+    //getWidget().setFocusPolicy(Qt::ClickFocus);
 
     _primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
     _primaryToolbarAction.addAction(&_settingsAction.getRenderModeAction(), 3, GroupAction::Horizontal);
@@ -483,8 +483,8 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     _numPoints = _positionDataset->getNumPoints();
 
-    _scatterPlotWidget->getPixelSelectionTool().setEnabled(_positionDataset.isValid());
-
+    //_scatterPlotWidget->getPixelSelectionTool().setEnabled(_positionDataset.isValid());
+    _scatterPlotWidget->getPixelSelectionTool().setEnabled(false);
    // _dropWidget->setShowDropIndicator(!_positionDataset.isValid());
 
     updateData();
