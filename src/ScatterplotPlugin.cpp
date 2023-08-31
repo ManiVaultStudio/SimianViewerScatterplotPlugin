@@ -47,12 +47,19 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _settingsAction(this, "Settings"),
     _primaryToolbarAction(this, "Primary Toolbar"),
     _secondaryToolbarAction(this, "Secondary Toolbar"),
-    _selectPointsTimer()
+    _selectPointsTimer(),
+    _selectedCrossSpeciesCluster(this, "CrossSpeciesclusterSelection"),
+    _scatterplotColorControlAction(this, "Scatterplot color")
 {
     setObjectName("Scatterplot");
 
     _dropWidget = new DropWidget(_scatterPlotWidget);
-
+    if (getFactory()->getNumberOfInstances() == 0) {
+        _selectedCrossSpeciesCluster.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
+        _scatterplotColorControlAction.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
+        _selectedCrossSpeciesCluster.publish("GlobalSelectedCrossspeciesCluster");
+        _scatterplotColorControlAction.publish("GlobalScatterplotColorControl");
+    }
     getWidget().setFocusPolicy(Qt::ClickFocus);
 
     _primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
@@ -232,13 +239,54 @@ ScatterplotPlugin::~ScatterplotPlugin()
 
 void ScatterplotPlugin::init()
 {
+     
+    // Get the available screen height and width
+    QRect availableScreenGeometry = QGuiApplication::primaryScreen()->availableGeometry();
+    int screenWidth = availableScreenGeometry.width();
+    int screenHeight = availableScreenGeometry.height();
+
+    // Calculate the size of the scatter plot widget and the view based on the available screen width
+    int scatterPlotWidth = 0.9 * screenWidth;
+    int viewWidth = 0.1 * screenWidth;
+    int widgetHeight = 0.9 * screenHeight;
+
+    QGraphicsView* view = new QGraphicsView(&_scene);
+    view->setRenderHint(QPainter::Antialiasing);
+    view->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    //view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view->setAlignment(Qt::AlignRight | Qt::AlignTop);
+    view->setFrameStyle(QFrame::NoFrame);
+    view->setFixedWidth(viewWidth);
+    view->setInteractive(true);
+
+    view->setWhatsThis("Cluster colors");
+    auto chartLegendLayout = new QHBoxLayout();
+    chartLegendLayout->addWidget(_scatterPlotWidget, scatterPlotWidth);
+    chartLegendLayout->addWidget(view, viewWidth);
+    chartLegendLayout->setContentsMargins(0, 0, 0, 0);
+    chartLegendLayout->setSpacing(0);
+    chartLegendLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
     auto layout = new QVBoxLayout();
 
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
-    layout->addWidget(_scatterPlotWidget, 100);
-    layout->addWidget(_secondaryToolbarAction.createWidget(&getWidget()));
+    auto optionsLayout = new QHBoxLayout();
+
+    optionsLayout->setContentsMargins(0, 0, 0, 0);
+    optionsLayout->setSpacing(1);
+    optionsLayout->setAlignment(Qt::AlignLeft);
+    auto coloringWidget = _settingsAction.getColoringAction().getColorMap1DAction().createWidget(&getWidget());
+    coloringWidget->setMaximumWidth(100);
+    QLabel* ColorLabel = new QLabel();
+    ColorLabel->setText("Color map: ");
+    optionsLayout->addWidget(ColorLabel);
+    optionsLayout->addWidget(coloringWidget);
+    optionsLayout->addWidget((_primaryToolbarAction.createWidget(&getWidget())));
+    layout->addLayout(optionsLayout);
+    layout->addLayout(chartLegendLayout);
+
 
     getWidget().setLayout(layout);
 
@@ -265,6 +313,10 @@ void ScatterplotPlugin::init()
     connect(&_positionDataset, &Dataset<Points>::changed, this, &ScatterplotPlugin::positionDatasetChanged);
     connect(&_positionDataset, &Dataset<Points>::dataChanged, this, &ScatterplotPlugin::updateData);
     connect(&_positionDataset, &Dataset<Points>::dataSelectionChanged, this, &ScatterplotPlugin::updateSelection);
+    // Update the window title when the GUI name of the position dataset changes
+    connect(&_positionDataset, &Dataset<Points>::guiNameChanged, this, &ScatterplotPlugin::updateWindowTitle);
+    // Do an initial update of the window title
+    updateWindowTitle();
 }
 
 void ScatterplotPlugin::loadData(const Datasets& datasets)
@@ -399,6 +451,14 @@ void ScatterplotPlugin::selectPoints()
     events().notifyDatasetDataSelectionChanged(_positionDataset->getSourceDataset<Points>());
 }
 
+void ScatterplotPlugin::updateWindowTitle()
+{
+    if (!_positionDataset.isValid())
+        getWidget().setWindowTitle(getGuiName());
+    else
+        getWidget().setWindowTitle(QString("%1: %2").arg(getGuiName(), _positionDataset->getDataHierarchyItem().getSerializationName()));
+}
+
 Dataset<Points>& ScatterplotPlugin::getPositionDataset()
 {
     return _positionDataset;
@@ -428,6 +488,8 @@ void ScatterplotPlugin::positionDatasetChanged()
     _dropWidget->setShowDropIndicator(!_positionDataset.isValid());
 
     updateData();
+    // Update the window title to reflect the position dataset change
+    updateWindowTitle();
 }
 
 void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uint32_t& dimensionIndex)
@@ -452,7 +514,7 @@ void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uin
     // Assign scalars and scalar effect
     _scatterPlotWidget->setScalars(scalars);
     _scatterPlotWidget->setScalarEffect(PointEffect::Color);
-
+    _scene.clear();
     _settingsAction.getColoringAction().updateColorMapActionScalarRange();
 
     // Render
@@ -490,7 +552,8 @@ void ScatterplotPlugin::loadColors(const Dataset<Clusters>& clusters)
     // Loop over all global indices and find the corresponding local color
     for (const auto& globalIndex : globalIndices)
         localColors[localColorIndex++] = globalColors[globalIndex];
-
+    _scene.clear();
+    updateLegend(clusters);
     // Apply colors to scatter plot widget without modification
     _scatterPlotWidget->setColors(localColors);
 
@@ -501,6 +564,119 @@ void ScatterplotPlugin::loadColors(const Dataset<Clusters>& clusters)
 ScatterplotWidget& ScatterplotPlugin::getScatterplotWidget()
 {
     return *_scatterPlotWidget;
+}
+
+void ScatterplotPlugin::updateLegend(const Dataset<Clusters>& clusters)
+{
+    if (!clusters.isValid())
+        return;
+    QGraphicsView* view = _scene.views().first();
+    _scene.clear();
+    int baseline = 0;
+    QGraphicsEllipseItem* ellipseItem;
+    QGraphicsTextItem* textItem;
+    int clusterIndex = 0;
+
+    for (const auto& cluster : clusters->getClusters())
+    {
+        QPen pen(Qt::NoPen);
+        pen.setWidth(1);
+        QBrush brush(Qt::SolidPattern);
+        brush.setColor(cluster.getColor());
+        ellipseItem = _scene.addEllipse(view->width() - 32, baseline + 5, 10, 10, pen, brush);//right aligned
+        //ellipseItem = _scene.addEllipse(20, baseline + 5, 10, 10, pen, brush);//left aligned
+        textItem = _scene.addText(cluster.getName(), QFont("Arial", 8));
+        textItem->setPos(view->width() - textItem->boundingRect().width() - 34, baseline); //right aligned
+        //textItem->setPos(30, baseline);//left aligned
+        //textItem->setOpenExternalLinks(true);
+        //textItem->setTextInteractionFlags(Qt::TextBrowserInteraction);
+        //textItem->setCursor(Qt::PointingHandCursor);
+        connect(textItem, &QGraphicsTextItem::linkActivated, this, [=]() {
+            qDebug() << "**clicked " << textItem->toPlainText() << " **";
+            textClicked(textItem->toPlainText());
+            });
+        clusterIndex++;
+        baseline = clusterIndex * 20;
+    }
+    int totalHeight = clusters->getClusters().size() * 20;
+    view->setSceneRect(0, 0, view->width(), totalHeight);
+}
+void ScatterplotPlugin::textClicked(QString clickedItem)
+{
+
+    if (_selectedCrossSpeciesCluster.getString() != "")
+    {
+        if (_selectedCrossSpeciesCluster.getString() == clickedItem)
+        {
+            _selectedCrossSpeciesCluster.setString("");
+        }
+        else
+        {
+            _selectedCrossSpeciesCluster.setString(clickedItem);
+        }
+    }
+    _scene.setSceneRect(0, 0, 0, 0);
+}
+void ScatterplotPlugin::selectTextEllipse()
+{
+    if (_scatterplotColorControlAction.getCurrentText() == "cross-species cluster")
+    {
+        changeHighlight();
+        scrollToHighlight();
+    }
+    else if (_scatterplotColorControlAction.getCurrentText() != "expression")
+    {
+        // Get the first view in the scene
+        QGraphicsView* view = _scene.views().first();
+        // Scroll to the top of the scene
+        view->ensureVisible(0, 0, 0, 0);
+    }
+    _scene.setSceneRect(0, 0, 0, 0);
+}
+void ScatterplotPlugin::changeHighlight()
+{
+    QList<QGraphicsItem*> items = _scene.items();
+    foreach(QGraphicsItem * item, items) {
+        QGraphicsTextItem* textItem = dynamic_cast<QGraphicsTextItem*>(item);
+        if (textItem) {
+            if (_selectedCrossSpeciesCluster.getString() == textItem->toPlainText())
+            {
+                textItem->setDefaultTextColor(_settingsAction.getSelectionAction().getPixelSelectionAction().getOverlayColorAction().getColor());
+            }
+            else
+            {
+                textItem->setDefaultTextColor(Qt::black);
+            }
+        }
+    }
+    _scene.setSceneRect(0, 0, 0, 0);
+}
+void ScatterplotPlugin::scrollToHighlight()
+{
+    QList<QGraphicsItem*> items = _scene.items();
+    foreach(QGraphicsItem * item, items) {
+        QGraphicsTextItem* textItem = dynamic_cast<QGraphicsTextItem*>(item);
+        if (textItem) {
+            if (_selectedCrossSpeciesCluster.getString() == textItem->toPlainText())
+            {
+                // Scroll to the position of the text item
+                _scene.views().first()->ensureVisible(textItem);
+            }
+        }
+    }
+    _scene.setSceneRect(0, 0, 0, 0);
+}
+void ScatterplotPlugin::handleSelection(QGraphicsItem* item)
+{
+    qDebug() << "handleSelection called";
+}
+void ScatterplotPlugin::mousePressEvent(QGraphicsSceneMouseEvent* event)
+{
+    qDebug() << "Mouse pressed!";
+    QGraphicsItem* item = _scene.itemAt(event->scenePos(), QTransform());
+    if (item && item->type() == QGraphicsTextItem::Type) {
+        handleSelection(item);
+    }
 }
 
 void ScatterplotPlugin::updateData()

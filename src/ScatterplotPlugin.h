@@ -8,7 +8,11 @@
 #include <actions/HorizontalToolbarAction.h>
 
 #include "Common.h"
-
+#include <QGraphicsTextItem>	
+#include <QGraphicsEllipseItem>	
+#include <QGraphicsSceneMouseEvent>	
+#include <QGraphicsItemGroup>	
+#include <QGraphicsItem>
 #include "SettingsAction.h"
 
 #include <QTimer>
@@ -88,18 +92,30 @@ public: // Miscellaneous
     /** Use the pixel selection tool to select data points */
     void selectPoints();
 
+protected:
+    /** Updates the window title (displays the name of the view and the GUI name of the loaded points dataset) */
+    void updateWindowTitle();
+
 public:
 
     /** Get reference to the scatter plot widget */
     ScatterplotWidget& getScatterplotWidget();
 
     SettingsAction& getSettingsAction() { return _settingsAction; }
-
+    StringAction& getSelectedCrossSpeciesClusterAction() { return _selectedCrossSpeciesCluster; }
+    OptionAction& getScatterplotColorControlAction() { return _scatterplotColorControlAction; }
 private:
     void updateData();
     void calculatePositions(const Points& points);
     void updateSelection();
-
+    void handleSelection(QGraphicsItem* item);
+    void mousePressEvent(QGraphicsSceneMouseEvent* event);
+    void selectTextEllipse();
+    void changeHighlight();
+    void textClicked(QString clickedItem);
+    void scrollToHighlight();
+    //void addHighlight();	
+    void updateLegend(const Dataset<Clusters>& clusters);
 public: // Serialization
 
     /**
@@ -120,9 +136,10 @@ private:
     std::vector<hdps::Vector2f>     _positions;                 /** Point positions */
     unsigned int                    _numPoints;                 /** Number of point positions */
     QTimer                          _selectPointsTimer;         /** Timer to limit the refresh rate of selection updates */
-
+    StringAction        _selectedCrossSpeciesCluster;
     static const std::int32_t LAZY_UPDATE_INTERVAL = 2;
-
+    QGraphicsScene          _scene;
+    OptionAction                 _scatterplotColorControlAction;
 protected:
     ScatterplotWidget*          _scatterPlotWidget;         /** THe visualization widget */
     hdps::gui::DropWidget*      _dropWidget;                /** Widget for dropping datasets */

@@ -20,7 +20,6 @@ DatasetsAction::DatasetsAction(QObject* parent, const QString& title) :
     setToolTip("Manage loaded datasets for position and color");
     setConfigurationFlag(WidgetAction::ConfigurationFlag::ForceCollapsedInGroup);
     setLabelSizingType(LabelSizingType::Auto);
-
     addAction(&_positionDatasetPickerAction);
     addAction(&_colorDatasetPickerAction);
 
