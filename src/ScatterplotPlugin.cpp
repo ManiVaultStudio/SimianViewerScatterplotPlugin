@@ -62,16 +62,16 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     }
     //getWidget().setFocusPolicy(Qt::ClickFocus);
 
-    _primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
-    _primaryToolbarAction.addAction(&_settingsAction.getRenderModeAction(), 3, GroupAction::Horizontal);
-    _primaryToolbarAction.addAction(&_settingsAction.getPositionAction(), 1, GroupAction::Horizontal);
+    //_primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
+    //_primaryToolbarAction.addAction(&_settingsAction.getRenderModeAction(), 3, GroupAction::Horizontal);
+   // _primaryToolbarAction.addAction(&_settingsAction.getPositionAction(), 1, GroupAction::Horizontal);
     _primaryToolbarAction.addAction(&_settingsAction.getPlotAction(), 2, GroupAction::Horizontal);
-    _primaryToolbarAction.addAction(&_settingsAction.getColoringAction());
-    _primaryToolbarAction.addAction(&_settingsAction.getSubsetAction());
-    _primaryToolbarAction.addAction(&_settingsAction.getClusteringAction());
-    _primaryToolbarAction.addAction(&_settingsAction.getSelectionAction());
+    //_primaryToolbarAction.addAction(&_settingsAction.getColoringAction());
+    //_primaryToolbarAction.addAction(&_settingsAction.getSubsetAction());
+    //_primaryToolbarAction.addAction(&_settingsAction.getClusteringAction());
+  //  _primaryToolbarAction.addAction(&_settingsAction.getSelectionAction());
 
-    _secondaryToolbarAction.addAction(&_settingsAction.getColoringAction().getColorMap1DAction(), 1);
+  //  _secondaryToolbarAction.addAction(&_settingsAction.getColoringAction().getColorMap1DAction(), 1);
 
     auto focusSelectionAction = new ToggleAction(this, "Focus selection");
 
@@ -94,22 +94,22 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     connect(_scatterPlotWidget, &ScatterplotWidget::renderModeChanged, this, updateReadOnly);
     connect(&_positionDataset, &Dataset<Points>::changed, this, updateReadOnly);
 
-    _secondaryToolbarAction.addAction(focusSelectionAction, 2);
-    _secondaryToolbarAction.addAction(&_settingsAction.getExportAction());
-    _secondaryToolbarAction.addAction(&_settingsAction.getMiscellaneousAction());
+    //_secondaryToolbarAction.addAction(focusSelectionAction, 2);
+   // _secondaryToolbarAction.addAction(&_settingsAction.getExportAction());
+    //_secondaryToolbarAction.addAction(&_settingsAction.getMiscellaneousAction());
 
-    connect(_scatterPlotWidget, &ScatterplotWidget::customContextMenuRequested, this, [this](const QPoint& point) {
-        if (!_positionDataset.isValid())
-            return;
+    //connect(_scatterPlotWidget, &ScatterplotWidget::customContextMenuRequested, this, [this](const QPoint& point) {
+    //    if (!_positionDataset.isValid())
+    //        return;
 
-        auto contextMenu = _settingsAction.getContextMenu();
+    //    auto contextMenu = _settingsAction.getContextMenu();
 
-        contextMenu->addSeparator();
+    //    contextMenu->addSeparator();
 
-        _positionDataset->populateContextMenu(contextMenu);
+    //    _positionDataset->populateContextMenu(contextMenu);
 
-        contextMenu->exec(getWidget().mapToGlobal(point));
-    });
+    //    contextMenu->exec(getWidget().mapToGlobal(point));
+    //});
 
    // _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
     //_dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
@@ -277,8 +277,13 @@ void ScatterplotPlugin::init()
     optionsLayout->setContentsMargins(0, 0, 0, 0);
     optionsLayout->setSpacing(1);
     optionsLayout->setAlignment(Qt::AlignLeft);
+    
+    _settingsAction.getColoringAction().getColorMap1DAction().getSettingsAction().setVisible(false);
+    _settingsAction.getColoringAction().getColorMap1DAction().getSettings1DAction().setVisible(false);
+    _settingsAction.getColoringAction().getColorMap1DAction().getSettings2DAction().setVisible(false);
     auto coloringWidget = _settingsAction.getColoringAction().getColorMap1DAction().createWidget(&getWidget());
     coloringWidget->setMaximumWidth(100);
+
     QLabel* ColorLabel = new QLabel();
     ColorLabel->setText("Color map: ");
     optionsLayout->addWidget(ColorLabel);
