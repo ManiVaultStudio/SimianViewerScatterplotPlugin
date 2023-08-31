@@ -229,6 +229,9 @@ signals:
 
 public slots:
     void computeDensity();
+    
+private slots:
+    void updatePixelRatio();
 
 private:
     const Matrix3f          toClipCoordinates = Matrix3f(2, 0, 0, 2, -1, -1);
@@ -244,4 +247,5 @@ private:
     Bounds                  _dataBounds;                        /** Bounds of the loaded data */
     QImage                  _colorMapImage;
     PixelSelectionTool      _pixelSelectionTool;
+    float                   _pixelRatio;
 };
