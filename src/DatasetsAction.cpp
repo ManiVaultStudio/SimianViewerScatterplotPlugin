@@ -33,6 +33,17 @@ DatasetsAction::DatasetsAction(QObject* parent, const QString& title) :
         return pointDatasets;
     });
 
+    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, [this](DatasetImpl* dataset) -> void {
+        _positionDatasetPickerAction.setCurrentDataset(dataset);
+        std::vector<std::string> substrings = { "human", "chimp", "gorilla", "rhesus", "marmoset" };
+        std::string input_str = dataset->getGuiName().toStdString();
+        for (const std::string& substring : substrings) {
+            if (input_str.find(substring) != std::string::npos) {
+                _scatterplotPlugin->getGuiNameAction().setString(QString::fromStdString("Scatterplot View: " + substring));
+                break;
+            }
+        }
+        });
     _colorDatasetPickerAction.setDatasetsFilterFunction([](const hdps::Datasets& datasets) -> Datasets {
         Datasets colorDatasets;
 
