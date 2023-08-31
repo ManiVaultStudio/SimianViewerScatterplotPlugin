@@ -38,7 +38,7 @@ PointPlotAction::PointPlotAction(QObject* parent, const QString& title) :
     _opacityAction.setConnectionPermissionsToNone();
 
     _sizeAction.getMagnitudeAction().setSuffix("px");
-    c.setSuffix("%");
+    _opacityAction.getMagnitudeAction().setSuffix("%");
 
     _opacityAction.getSourceAction().getOffsetAction().setSuffix("%");
 
