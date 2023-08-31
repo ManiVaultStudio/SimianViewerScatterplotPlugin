@@ -24,16 +24,7 @@ PointPlotAction::PointPlotAction(QObject* parent, const QString& title) :
     addAction(&_sizeAction);
     addAction(&_opacityAction);
 
-    _sizeAction.getMagnitudeAction().setConnectionPermissionsFlag(WidgetAction::ConnectionPermissionFlag::All);
-    _opacityAction.getMagnitudeAction().setConnectionPermissionsFlag(WidgetAction::ConnectionPermissionFlag::All);
 
-    const auto globalPointSizeName = "GlobalPointSize";
-    const auto globalPointOpacityName = "GlobalPointOpacity";
-
-    if (_scatterplotPlugin->getFactory()->getNumberOfInstances() == 0) {
-        _sizeAction.getMagnitudeAction().publish(globalPointSizeName);
-        _opacityAction.getMagnitudeAction().publish(globalPointOpacityName);
-    }
     _sizeAction.setConnectionPermissionsToNone();
     _opacityAction.setConnectionPermissionsToNone();
 
@@ -128,7 +119,16 @@ void PointPlotAction::initialize(ScatterplotPlugin* scatterplotPlugin)
         return;
 
     _scatterplotPlugin = scatterplotPlugin;
+    _sizeAction.getMagnitudeAction().setConnectionPermissionsFlag(WidgetAction::ConnectionPermissionFlag::All);
+    _opacityAction.getMagnitudeAction().setConnectionPermissionsFlag(WidgetAction::ConnectionPermissionFlag::All);
 
+    const auto globalPointSizeName = "GlobalPointSize";
+    const auto globalPointOpacityName = "GlobalPointOpacity";
+
+    if (_scatterplotPlugin->getFactory()->getNumberOfInstances() == 0) {
+        _sizeAction.getMagnitudeAction().publish(globalPointSizeName);
+        _opacityAction.getMagnitudeAction().publish(globalPointOpacityName);
+    }
     connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, [this]() {
 
         const auto positionDataset = _scatterplotPlugin->getPositionDataset();

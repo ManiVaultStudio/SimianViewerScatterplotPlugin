@@ -142,7 +142,7 @@ private:
     OptionAction                 _scatterplotColorControlAction;
 protected:
     ScatterplotWidget*          _scatterPlotWidget;         /** THe visualization widget */
-    hdps::gui::DropWidget*      _dropWidget;                /** Widget for dropping datasets */
+   // hdps::gui::DropWidget*      _dropWidget;                /** Widget for dropping datasets */
     SettingsAction              _settingsAction;            /** Group action for all settings */
     HorizontalToolbarAction     _primaryToolbarAction;      /** Horizontal toolbar for primary content */
     HorizontalToolbarAction     _secondaryToolbarAction;    /** Secondary toolbar for secondary content */
