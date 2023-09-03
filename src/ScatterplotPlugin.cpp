@@ -49,17 +49,19 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _secondaryToolbarAction(this, "Secondary Toolbar"),
     _selectPointsTimer(),
     _selectedCrossSpeciesCluster(this, "CrossSpeciesclusterSelection"),
-    _scatterplotColorControlAction(this, "Scatterplot color")
+    _scatterplotColorControlAction(this, "Scatterplot Expression color control")
 {
     setObjectName("Scatterplot");
-
+    _scatterplotColorControlAction.initialize(QStringList({ "cross-species cluster","in-species cluster","expression","cross-species sub-class","in-species subclass","donor" }), "cross-species cluster");
     //_dropWidget = new DropWidget(_scatterPlotWidget);
     if (getFactory()->getNumberOfInstances() == 0) {
         _selectedCrossSpeciesCluster.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
         _scatterplotColorControlAction.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
         _selectedCrossSpeciesCluster.publish("GlobalSelectedCrossspeciesCluster");
-        _scatterplotColorControlAction.publish("GlobalScatterplotColorControl");
+        _scatterplotColorControlAction.publish("GlobalScatterplotColorControlExpressionComp");
     }
+
+
     //getWidget().setFocusPolicy(Qt::ClickFocus);
 
     //_primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
@@ -70,7 +72,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     //_primaryToolbarAction.addAction(&_settingsAction.getSubsetAction());
     //_primaryToolbarAction.addAction(&_settingsAction.getClusteringAction());
   //  _primaryToolbarAction.addAction(&_settingsAction.getSelectionAction());
-
+    _settingsAction.getPlotAction().getPointPlotAction().getOpacityAction().getSourceAction().setVisible(false);
+    _settingsAction.getPlotAction().getPointPlotAction().getSizeAction().getSourceAction().setVisible(false);
   //  _secondaryToolbarAction.addAction(&_settingsAction.getColoringAction().getColorMap1DAction(), 1);
 
     auto focusSelectionAction = new ToggleAction(this, "Focus selection");
@@ -93,7 +96,10 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
 
     connect(_scatterPlotWidget, &ScatterplotWidget::renderModeChanged, this, updateReadOnly);
     connect(&_positionDataset, &Dataset<Points>::changed, this, updateReadOnly);
-
+    connect(&_scatterplotColorControlAction, &OptionAction::currentIndexChanged, this, &ScatterplotPlugin::selectTextEllipse);
+    //getWidget().setFocusPolicy(Qt::ClickFocus);
+    connect(&_selectedCrossSpeciesCluster, &StringAction::stringChanged, this, &ScatterplotPlugin::selectTextEllipse);
+    connect(&_settingsAction.getSelectionAction().getPixelSelectionAction().getOverlayColorAction(), &ColorAction::colorChanged, this, &ScatterplotPlugin::selectTextEllipse);
     //_secondaryToolbarAction.addAction(focusSelectionAction, 2);
    // _secondaryToolbarAction.addAction(&_settingsAction.getExportAction());
     //_secondaryToolbarAction.addAction(&_settingsAction.getMiscellaneousAction());
@@ -761,6 +767,8 @@ void ScatterplotPlugin::fromVariantMap(const QVariantMap& variantMap)
     _primaryToolbarAction.fromParentVariantMap(variantMap);
     _secondaryToolbarAction.fromParentVariantMap(variantMap);
     _settingsAction.fromVariantMap(variantMap["Settings"].toMap());
+    _scatterplotColorControlAction.fromParentVariantMap(variantMap);
+        _selectedCrossSpeciesCluster.fromParentVariantMap(variantMap);
 }
 
 QVariantMap ScatterplotPlugin::toVariantMap() const
@@ -770,7 +778,8 @@ QVariantMap ScatterplotPlugin::toVariantMap() const
     _primaryToolbarAction.insertIntoVariantMap(variantMap);
     _secondaryToolbarAction.insertIntoVariantMap(variantMap);
     _settingsAction.insertIntoVariantMap(variantMap);
-
+    _scatterplotColorControlAction.insertIntoVariantMap(variantMap);
+    _selectedCrossSpeciesCluster.insertIntoVariantMap(variantMap);
     return variantMap;
 }
 
