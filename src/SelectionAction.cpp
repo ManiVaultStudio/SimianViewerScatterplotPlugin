@@ -62,18 +62,6 @@ void SelectionAction::initialize(ScatterplotPlugin* scatterplotPlugin)
         return;
 
     auto& scatterplotWidget = scatterplotPlugin->getScatterplotWidget();
-    if (scatterplotPlugin->getFactory()->getNumberOfInstances() == 0) {
-        _pixelSelectionAction.getOverlayColorAction().setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
-        _pixelSelectionAction.getOverlayColorAction().publish("GlobalSelectionColor");
-    }
-    //if (scatterplotPlugin->getFactory()->getNumberOfInstances() == 0) {
-    //    //_overlayColorAction.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
-    //    _pixelSelectionAction.getOverlayColorAction().publish("GlobalSelectionColor");
-    //}
-    //else {
-    //    _pixelSelectionAction.getOverlayColorAction().connect connectToPublicActionByName("GlobalSelectionColor");
-    //}
-
     getPixelSelectionAction().initialize(&scatterplotWidget, &scatterplotWidget.getPixelSelectionTool(), {
         PixelSelectionType::Rectangle,
         PixelSelectionType::Brush,

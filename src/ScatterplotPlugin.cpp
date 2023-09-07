@@ -53,28 +53,12 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
 {
     setObjectName("Scatterplot");
     _scatterplotColorControlAction.initialize(QStringList({ "cross-species cluster","in-species cluster","expression","cross-species sub-class","in-species subclass","donor" }), "cross-species cluster");
-    //_dropWidget = new DropWidget(_scatterPlotWidget);
-    if (getFactory()->getNumberOfInstances() == 0) {
-        _selectedCrossSpeciesCluster.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
-        _scatterplotColorControlAction.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
-        _selectedCrossSpeciesCluster.publish("GlobalSelectedCrossspeciesCluster");
-        _scatterplotColorControlAction.publish("GlobalScatterplotColorControlExpressionComp");
-    }
 
-
-    //getWidget().setFocusPolicy(Qt::ClickFocus);
-
-    //_primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
-    //_primaryToolbarAction.addAction(&_settingsAction.getRenderModeAction(), 3, GroupAction::Horizontal);
-   // _primaryToolbarAction.addAction(&_settingsAction.getPositionAction(), 1, GroupAction::Horizontal);
     _primaryToolbarAction.addAction(&_settingsAction.getPlotAction(), 2, GroupAction::Horizontal);
-    //_primaryToolbarAction.addAction(&_settingsAction.getColoringAction());
-    //_primaryToolbarAction.addAction(&_settingsAction.getSubsetAction());
-    //_primaryToolbarAction.addAction(&_settingsAction.getClusteringAction());
-  //  _primaryToolbarAction.addAction(&_settingsAction.getSelectionAction());
+
     _settingsAction.getPlotAction().getPointPlotAction().getOpacityAction().getSourceAction().setVisible(false);
     _settingsAction.getPlotAction().getPointPlotAction().getSizeAction().getSourceAction().setVisible(false);
-  //  _secondaryToolbarAction.addAction(&_settingsAction.getColoringAction().getColorMap1DAction(), 1);
+
 
     auto focusSelectionAction = new ToggleAction(this, "Focus selection");
 
@@ -288,13 +272,14 @@ void ScatterplotPlugin::init()
     _settingsAction.getColoringAction().getColorMap1DAction().getSettings1DAction().setVisible(false);
     _settingsAction.getColoringAction().getColorMap1DAction().getSettings2DAction().setVisible(false);
     auto coloringWidget = _settingsAction.getColoringAction().getColorMap1DAction().createWidget(&getWidget());
+    //auto coloringWidgetLabel = _settingsAction.getColoringAction().getColorMap1DAction().createLabelWidget(&getWidget());
     coloringWidget->setMaximumWidth(100);
-
     QLabel* ColorLabel = new QLabel();
     ColorLabel->setText("Color map: ");
+    //optionsLayout->addWidget(coloringWidgetLabel);
     optionsLayout->addWidget(ColorLabel);
     optionsLayout->addWidget(coloringWidget);
-    optionsLayout->addWidget((_primaryToolbarAction.createWidget(&getWidget())));
+    optionsLayout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
     layout->addLayout(optionsLayout);
     layout->addLayout(chartLegendLayout);
 

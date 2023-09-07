@@ -34,11 +34,7 @@ ColoringAction::ColoringAction(QObject* parent, const QString& title) :
 
     _colorByAction.setCustomModel(&_colorByModel);
     _colorByAction.setToolTip("Color by");
-    _colorMap1DAction.setConnectionPermissionsFlag(ConnectionPermissionFlag::All);
-    if (_scatterplotPlugin->getFactory()->getNumberOfInstances() == 0)
-    {
-        _colorMap1DAction.publish("GlobalColorMap");
-    }
+
     connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, [this]() {
         const auto positionDataset = _scatterplotPlugin->getPositionDataset();
 
