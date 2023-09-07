@@ -1,4 +1,4 @@
-name: ScatterplotPlugin
+name: SimianScatterplot
 
 on:
   push:
