@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.17)
 
-set(PROJECT "ScatterplotPlugin")
-
+# -----------------------------------------------------------------------------
+# Scatterplot Plugin
+# -----------------------------------------------------------------------------
+set(PROJECT "SimianViewerScatterplotPlugin")
 PROJECT(${PROJECT})
 
+# -----------------------------------------------------------------------------
+# CMake Options
+# -----------------------------------------------------------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTORCC ON)
@@ -16,13 +21,22 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 endif(MSVC)
 
+# -----------------------------------------------------------------------------
+# Set install directory
+# -----------------------------------------------------------------------------
 # Get the env path and allow the user to change it
 set(INSTALL_DIR $ENV{HDPS_INSTALL_DIR} CACHE PATH "The HDPS Install Directoy")
 # Normalize the incoming install path
 file(TO_CMAKE_PATH ${INSTALL_DIR} INSTALL_DIR)
 
+# -----------------------------------------------------------------------------
+# Dependencies
+# -----------------------------------------------------------------------------
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets OpenGL OpenGLWidgets REQUIRED)
 
+# -----------------------------------------------------------------------------
+# Source files
+# -----------------------------------------------------------------------------
 set(PLUGIN
     src/Common.h
     src/ScatterplotPlugin.h
@@ -90,17 +104,27 @@ source_group(Actions FILES ${Actions})
 source_group(Models FILES ${Models})
 source_group(Aux FILES ${AUX})
 
+# -----------------------------------------------------------------------------
+# CMake Target
+# -----------------------------------------------------------------------------
 add_library(${PROJECT} SHARED ${SOURCES} ${SHADERS} ${AUX})
 
 qt_wrap_cpp(SCATTERPLOT_MOC ${PLUGIN_MOC_HEADERS} TARGET ${PROJECT})
 target_sources(${PROJECT} PRIVATE ${SCATTERPLOT_MOC})
 
+# -----------------------------------------------------------------------------
+# Target include directories
+# -----------------------------------------------------------------------------
 target_include_directories(${PROJECT} PRIVATE "${INSTALL_DIR}/$<CONFIGURATION>/include/")
 
+# -----------------------------------------------------------------------------
+# Target properties
+# -----------------------------------------------------------------------------
 target_compile_features(${PROJECT} PRIVATE cxx_std_17)
 
-set(SPP_HEADERS)
-
+# -----------------------------------------------------------------------------
+# Target library linking
+# -----------------------------------------------------------------------------
 set(HDPS_LINK_PATH "${INSTALL_DIR}/$<CONFIGURATION>/lib")
 set(PLUGIN_LINK_PATH "${INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
 set(HDPS_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
@@ -117,6 +141,9 @@ target_link_libraries(${PROJECT} PRIVATE "${HDPS_LINK_LIBRARY}")
 target_link_libraries(${PROJECT} PRIVATE "${POINTDATA_LINK_LIBRARY}")
 target_link_libraries(${PROJECT} PRIVATE "${CLUSTERDATA_LINK_LIBRARY}")
 
+# -----------------------------------------------------------------------------
+# Target installation
+# -----------------------------------------------------------------------------
 install(TARGETS ${PROJECT}
     RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
     LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so
@@ -129,6 +156,9 @@ add_custom_command(TARGET ${PROJECT} POST_BUILD
         --prefix ${INSTALL_DIR}/$<CONFIGURATION>
 )
 
+# -----------------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------------
 # Automatically set the debug environment (command + working directory) for MSVC
 if(MSVC)
 	set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${INSTALL_DIR}/debug,${INSTALL_DIR}/release>)

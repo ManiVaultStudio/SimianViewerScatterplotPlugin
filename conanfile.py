@@ -8,8 +8,8 @@ import subprocess
 from rules_support import PluginBranchInfo
 
 
-class SimianScatterplotConan(ConanFile):
-    """Class to package SimianScatterplot using conan
+class SimianViewerScatterplotPluginConan(ConanFile):
+    """Class to package SimianViewerScatterplotPlugin using conan
 
     Packages both RELEASE and DEBUG.
     Uses rules_support (github.com/hdps/rulessupport) to derive
@@ -17,11 +17,11 @@ class SimianScatterplotConan(ConanFile):
     as described in https://github.com/hdps/core/wiki/Branch-naming-rules
     """
 
-    name = "SimianScatterplotPlugin"
+    name = "SimianViewerScatterplotPluginPlugin"
     description = """Plugins for displaying scatterplots
                   in the high-dimensional plugin system (HDPS)."""
     topics = ("hdps", "plugin", "image data", "loading")
-    url = "https://github.com/hdps/SimianScatterplot"
+    url = "https://github.com/hdps/SimianViewerScatterplotPlugin"
     author = "B. van Lew b.van_lew@lumc.nl"  # conan recipe author
     license = "MIT"
 
@@ -37,7 +37,7 @@ class SimianScatterplotConan(ConanFile):
 
     scm = {
         "type": "git",
-        "subfolder": "hdps/SimianScatterplot",
+        "subfolder": "hdps/SimianViewerScatterplotPlugin",
         "url": "auto",
         "revision": "auto",
     }
@@ -99,7 +99,7 @@ class SimianScatterplotConan(ConanFile):
 
     def _configure_cmake(self):
         cmake = CMake(self)
-        cmake.configure(build_script_folder="hdps/SimianScatterplot")
+        cmake.configure(build_script_folder="hdps/SimianViewerScatterplotPlugin")
         cmake.verbose = True
         return cmake
 
