@@ -1,5 +1,5 @@
 {
-    "name" : "Scatterplot View",
+    "name" : "Simian Viewer Scatterplot View",
     "version" : "1",
     "dependencies" : ["Points"]
 }

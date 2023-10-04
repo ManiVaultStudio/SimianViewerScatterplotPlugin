@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 
 # -----------------------------------------------------------------------------
-# Scatterplot Plugin
+# Simian Viewer Scatterplot Plugin
 # -----------------------------------------------------------------------------
 set(PROJECT "SimianViewerScatterplotPlugin")
 PROJECT(${PROJECT})
