@@ -60,29 +60,29 @@ ScatterplotWidget::ScatterplotWidget() :
 
     surfaceFormat.setRenderableType(QSurfaceFormat::OpenGL);
 
-#ifdef __APPLE__
-    // Ask for an OpenGL 3.3 Core Context as the default
-    surfaceFormat.setVersion(3, 3);
+    // Ask for an different OpenGL versions depending on OS
+#if defined(__APPLE__) 
+    surfaceFormat.setVersion(3, 3); // https://support.apple.com/en-us/101525
     surfaceFormat.setProfile(QSurfaceFormat::CoreProfile);
-    surfaceFormat.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-    //QSurfaceFormat::setDefaultFormat(defaultFormat);
+#elif defined(__linux__ )
+    surfaceFormat.setVersion(4, 2); // glxinfo | grep "OpenGL version"
+    surfaceFormat.setProfile(QSurfaceFormat::CompatibilityProfile);
 #else
-    // Ask for an OpenGL 4.3 Core Context as the default
     surfaceFormat.setVersion(4, 3);
     surfaceFormat.setProfile(QSurfaceFormat::CoreProfile);
-    surfaceFormat.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
 #endif
 
 #ifdef _DEBUG
     surfaceFormat.setOption(QSurfaceFormat::DebugContext);
 #endif
 
+    surfaceFormat.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
     surfaceFormat.setSamples(16);
 
     setFormat(surfaceFormat);
     
-    // we connect screenchanged to updating the pixel ratio
-    // this is necesary in case the window is moved between hi and low dpi screens
+    // we connect screenChanged to updating the pixel ratio
+    // this is necessary in case the window is moved between hi and low dpi screens
     // e.g., from a laptop display to a projector
     winId(); // This is needed to produce a valid windowHandle
     QObject::connect(windowHandle(), &QWindow::screenChanged, this, &ScatterplotWidget::updatePixelRatio);
@@ -250,6 +250,8 @@ void ScatterplotWidget::setPointOpacityScalars(const std::vector<float>& pointOp
 void ScatterplotWidget::setPointScaling(hdps::gui::PointScaling scalingMode)
 {
     _pointRenderer.setPointScaling(scalingMode);
+
+    update();
 }
 
 void ScatterplotWidget::setScalarEffect(PointEffect effect)
@@ -415,7 +417,7 @@ void ScatterplotWidget::setSelectionOutlineColor(const QColor& selectionOutlineC
 {
     _pointRenderer.setSelectionOutlineColor(Vector3f(selectionOutlineColor.redF(), selectionOutlineColor.greenF(), selectionOutlineColor.blueF()));
 
-    update();
+   update();
 }
 
 bool ScatterplotWidget::getSelectionOutlineOverrideColor() const
@@ -605,9 +607,6 @@ void ScatterplotWidget::setColorMap(const QImage& colorMapImage)
     // Do not update color maps of the renderers when OpenGL is not initialized
     if (!_isInitialized)
         return;
-
-    // Activate OpenGL context
-    makeCurrent();
 
     // Apply color maps to renderers
     _pointRenderer.setColormap(_colorMapImage);
