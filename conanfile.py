@@ -17,7 +17,7 @@ class SimianViewerScatterplotPluginConan(ConanFile):
     as described in https://github.com/hdps/core/wiki/Branch-naming-rules
     """
 
-    name = "SimianViewerScatterplotPluginPlugin"
+    name = "SimianViewerScatterplotPlugin"
     description = """Plugins for displaying scatterplots
                   in the high-dimensional plugin system (HDPS)."""
     topics = ("hdps", "plugin", "image data", "loading")
