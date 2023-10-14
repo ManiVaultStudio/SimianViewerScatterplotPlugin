@@ -6,9 +6,9 @@
 #include <actions/VerticalGroupAction.h>
 #include <actions/HorizontalGroupAction.h>
 
-using namespace hdps;
-using namespace hdps::gui;
-using namespace hdps::util;
+using namespace mv;
+using namespace mv::gui;
+using namespace mv::util;
 
 class Clusters;
 class ScatterplotPlugin;

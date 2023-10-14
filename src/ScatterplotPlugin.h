@@ -17,15 +17,15 @@
 
 #include <QTimer>
 
-using namespace hdps::plugin;
-using namespace hdps::util;
-using namespace hdps::gui;
+using namespace mv::plugin;
+using namespace mv::util;
+using namespace mv::gui;
 
 class Points;
 
 class ScatterplotWidget;
 
-namespace hdps
+namespace mv
 {
     class CoreInterface;
     class Vector2f;
@@ -133,7 +133,7 @@ public: // Serialization
 private:
     Dataset<Points>                 _positionDataset;           /** Smart pointer to points dataset for point position */
     Dataset<Points>                 _positionSourceDataset;     /** Smart pointer to source of the points dataset for point position (if any) */
-    std::vector<hdps::Vector2f>     _positions;                 /** Point positions */
+    std::vector<mv::Vector2f>     _positions;                 /** Point positions */
     unsigned int                    _numPoints;                 /** Number of point positions */
     QTimer                          _selectPointsTimer;         /** Timer to limit the refresh rate of selection updates */
     StringAction        _selectedCrossSpeciesCluster;
@@ -142,7 +142,7 @@ private:
     OptionAction                 _scatterplotColorControlAction;
 protected:
     ScatterplotWidget*          _scatterPlotWidget;         /** THe visualization widget */
-   // hdps::gui::DropWidget*      _dropWidget;                /** Widget for dropping datasets */
+   // mv::gui::DropWidget*      _dropWidget;                /** Widget for dropping datasets */
     SettingsAction              _settingsAction;            /** Group action for all settings */
     HorizontalToolbarAction     _primaryToolbarAction;      /** Horizontal toolbar for primary content */
     HorizontalToolbarAction     _secondaryToolbarAction;    /** Secondary toolbar for secondary content */
@@ -154,7 +154,7 @@ protected:
 
 class ScatterplotPluginFactory : public ViewPluginFactory
 {
-    Q_INTERFACES(hdps::plugin::ViewPluginFactory hdps::plugin::PluginFactory)
+    Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
         Q_OBJECT
         Q_PLUGIN_METADATA(IID   "nl.tudelft.ScatterplotPlugin"
             FILE  "ScatterplotPlugin.json")
@@ -177,5 +177,5 @@ public:
      * @param datasets Vector of input datasets
      * @return Vector of plugin trigger actions
      */
-    PluginTriggerActions getPluginTriggerActions(const hdps::Datasets& datasets) const override;
+    PluginTriggerActions getPluginTriggerActions(const mv::Datasets& datasets) const override;
 };
