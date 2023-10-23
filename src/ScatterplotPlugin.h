@@ -156,7 +156,7 @@ class ScatterplotPluginFactory : public ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
         Q_OBJECT
-        Q_PLUGIN_METADATA(IID   "nl.tudelft.ScatterplotPlugin"
+        Q_PLUGIN_METADATA(IID   "nl.tudelft.SimianScatterplotPlugin"
             FILE  "ScatterplotPlugin.json")
 
 public:

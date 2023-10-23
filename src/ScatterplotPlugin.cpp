@@ -31,7 +31,7 @@
 #include <set>
 #include <vector>
 
-Q_PLUGIN_METADATA(IID "nl.tudelft.ScatterplotPlugin")
+Q_PLUGIN_METADATA(IID "nl.tudelft.SimianScatterplotPlugin")
 
 using namespace mv;
 using namespace mv::util;
@@ -810,7 +810,7 @@ PluginTriggerActions ScatterplotPluginFactory::getPluginTriggerActions(const mv:
         auto& fontAwesome = Application::getIconFont("FontAwesome");
 
         if (numberOfDatasets >= 1) {
-            auto pluginTriggerAction = new PluginTriggerAction(const_cast<ScatterplotPluginFactory*>(this), this, "Scatterplot", "View selected datasets side-by-side in separate scatter plot viewers", fontAwesome.getIcon("braille"), [this, getInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+            auto pluginTriggerAction = new PluginTriggerAction(const_cast<ScatterplotPluginFactory*>(this), this, "Simian Scatterplot", "View selected datasets side-by-side in separate scatter plot viewers", fontAwesome.getIcon("braille"), [this, getInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
                 for (auto dataset : datasets)
                     getInstance()->loadData(Datasets({ dataset }));
             });

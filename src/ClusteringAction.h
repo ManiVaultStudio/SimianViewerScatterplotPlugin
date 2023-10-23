@@ -5,6 +5,8 @@
 #include <actions/TriggerAction.h>
 #include <actions/VerticalGroupAction.h>
 #include <actions/HorizontalGroupAction.h>
+#include <actions/ColorAction.h>
+#include <actions/StringAction.h>
 
 using namespace mv;
 using namespace mv::gui;
@@ -30,11 +32,6 @@ public:
      * @param title Title
      */
     Q_INVOKABLE ClusteringAction(QObject* parent, const QString& title);
-
-protected:
-
-    /** Update the state of the actions */
-    void updateActions();
 
 private:
 
